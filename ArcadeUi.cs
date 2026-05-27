@@ -1,10 +1,12 @@
 using Godot;
+using System;
 
 public partial class ArcadeUi : CanvasLayer
 {
 	[Export] public Control MainMenuPanel;
 	[Export] public Control DifficultyMenuPanel;
 	[Export] public Control GameOverPanel;
+	[Export] public Control LoadingPanel; // ADDED: Drag your loading message container node here in the Inspector
 	[Export] public Label ScoreDisplayLabel;
 
 	public override void _Ready()
@@ -47,6 +49,10 @@ public partial class ArcadeUi : CanvasLayer
 		// Save the multiplier for your baseline fallback scaling
 		ArcadeSaveSystem.DifficultyMultiplier = multiplier;
 		ArcadeSaveSystem.IsGamePlaying = true;
+
+		// UPGRADED: Immediately switch the UI into a loading state so the buttons vanish instantly
+		DifficultyMenuPanel?.Hide();
+		LoadingPanel?.Show();
 
 		// Find the manager and tell it which difficulty setting to build a prompt for
 		var dataManager = GetTree().Root.GetNodeOrNull<GameDataManager>("Main/GameDataManager");
@@ -91,6 +97,7 @@ public partial class ArcadeUi : CanvasLayer
 		MainMenuPanel?.Hide();
 		DifficultyMenuPanel?.Hide();
 		GameOverPanel?.Hide();
+		LoadingPanel?.Hide(); // ADDED
 	}
 
 	// Difficulty Button Direct Callbacks

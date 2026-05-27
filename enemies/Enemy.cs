@@ -1,4 +1,5 @@
 using Godot;
+using System;
 
 public partial class Enemy : CharacterBody3D
 {
@@ -80,47 +81,63 @@ public partial class Enemy : CharacterBody3D
 		AddToGroup("enemies");
 		GD.Print($"[Spawned] {EnemyName} added to 'enemies' group.");
 
-		// --- NEW DYNAMIC AI INGESTION LOGIC ---
+		// --- UPDATED DYNAMIC ARCHETYPE VISUALS & PHYSICS ENGINE ---
 		var material = new StandardMaterial3D();
 		meshInstance.Mesh = new CapsuleMesh();
 		meshInstance.Rotation = Vector3.Zero;
 
-		// Use basic name checks to decide color variants dynamically
-		if (EnemyName.Contains("Demon") || EnemyName.Contains("Golem"))
+		// Establish layout scaling defaults
+		float targetScaleUniform = 1.0f;
+		float targetScaleY = 1.0f;
+
+		// Explicitly check for our exact 3 cloud-directed archetypes
+		if (EnemyName == "Big Red Demon")
 		{
-			material.AlbedoColor = Colors.Red;
+			material.AlbedoColor = new Color(0.8f, 0.1f, 0.1f); // Crimson Red
+			targetScaleUniform = 2.2f; // Extra wide/girthy
+			targetScaleY = 2.5f;       // Towering height
 		}
-		else if (EnemyName.Contains("Phantom") || EnemyName.Contains("Skull"))
+		else if (EnemyName == "Small Brown Robber")
 		{
-			material.AlbedoColor = Colors.Purple;
+			material.AlbedoColor = new Color(0.45f, 0.28f, 0.15f); // Leather Brown
+			targetScaleUniform = 0.8f; // Thin
+			targetScaleY = 0.9f;       // Short
 		}
-		else
+		else if (EnemyName == "Medium Silver Soldier")
+		{
+			material.AlbedoColor = new Color(0.75f, 0.75f, 0.8f); // Metallic Silver
+			material.Metallic = 0.8f;   // Shiny steel finish
+			material.Roughness = 0.2f;
+			targetScaleUniform = 1.4f; // Clean baseline proportions
+			targetScaleY = 1.5f;
+		}
+		else // Fallback safety layer if name mapping text drifts
 		{
 			material.AlbedoColor = Colors.DarkGray;
+			targetScaleUniform = Mathf.Max(data.scale_uniform, 1.0f);
+			targetScaleY = Mathf.Max(data.scale_y, 1.0f);
 		}
+
 		meshInstance.MaterialOverride = material;
 
-		// --- CRITICAL JOLT PHYSICS CRASH SAFEGUARDS ---
-		float safeUniformScale = Mathf.Max(data.scale_uniform, 1.0f);
-		float safeHeightScale = Mathf.Max(data.scale_y, 1.0f);
+		// Scale the visual Mesh based on our locked archetype values
+		meshInstance.Scale = new Vector3(targetScaleUniform, targetScaleY, targetScaleUniform);
 
-		// Scale the visual Mesh safely
-		meshInstance.Scale = new Vector3(safeUniformScale, safeHeightScale, safeUniformScale);
-
-		// Match the physical collision shape to the guaranteed safe scales
+		// Match the physical Jolt collision shape perfectly to the custom scales
 		if (collisionShape.Shape is CapsuleShape3D standardCapsule)
 		{
 			var uniqueCapsule = (CapsuleShape3D)standardCapsule.Duplicate();
 			
 			collisionShape.Rotation = meshInstance.Rotation;
 
-			uniqueCapsule.Radius = 0.5f * safeUniformScale;
-			uniqueCapsule.Height = 2.0f * safeHeightScale;
+			// Base capsule properties (0.5m radius, 2.0m height) multiplied by our scaling metrics
+			uniqueCapsule.Radius = 0.5f * targetScaleUniform;
+			uniqueCapsule.Height = 2.0f * targetScaleY;
 
 			collisionShape.Shape = uniqueCapsule;
 		}
 
-		GD.Print($"[AI Ingest Success] {EnemyName} initialized with {Health} HP, {Speed} Speed. Radius: {0.5f * safeUniformScale}, Height: {2.0f * safeHeightScale}");
+		GD.Print($"[AI Ingest Success] {EnemyName} initialized with {Health} HP, {Speed} Speed. Radius: {0.5f * targetScaleUniform}, Height: {2.0f * targetScaleY}");
 	}
 
 	public void TakeDamage(float amount)
