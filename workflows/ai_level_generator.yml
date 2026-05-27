@@ -1,0 +1,43 @@
+name: AI Level Generator Pipeline
+
+on:
+  push:
+    paths:
+      - 'prompt_intent.txt' # Runs automatically every time you edit your prompt file!
+
+jobs:
+  build-and-generate:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Pull down your project files from the repository
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Load Python in the cloud workspace
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-cache-dependency-path: "" # Clear cache paths for clean execution
+        python-version: '3.11'
+
+    # 3. Download the Gemini SDK library 
+    - name: Install Dependencies
+      run: |
+        pip install google-genai
+
+    # 4. Trigger your script securely using your API Key Secret
+    - name: Run Level Generator
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        python generate_level.py
+
+    # 5. Commit and push the brand new level_config.json right back to your game source files
+    - name: Commit Updated Level
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+        git add level_config.json
+        git commit -m "🤖 AI Director: Generated new level configuration" || exit 0
+        git push
