@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://upr3il4fubae"
+path="res://.godot/imported/SpearModel.obj-d1511f2ae9892a62c3634786d18939ba.mesh"
+
+[deps]
+
+files=["res://.godot/imported/SpearModel.obj-d1511f2ae9892a62c3634786d18939ba.mesh"]
+
+source_file="res://models/assets/SpearModel.obj"
+dest_files=["res://.godot/imported/SpearModel.obj-d1511f2ae9892a62c3634786d18939ba.mesh", "res://.godot/imported/SpearModel.obj-d1511f2ae9892a62c3634786d18939ba.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

@@ -1,0 +1,26 @@
+[
+  {
+	"name": "Robber",
+	"health": 100.0,
+	"speed": 5.0,
+	"scene_path": "res://enemies/base_enemy.tscn",
+	"scale_uniform": 1.0,
+	"scale_y": 1.0
+  },
+  {
+	"name": "Demon",
+	"health": 300.0,
+	"speed": 2.5,
+	"scene_path": "res://enemies/base_enemy.tscn",
+	"scale_uniform": 2.5,
+	"scale_y": 2.5
+  },
+  {
+	"name": "Soliders",
+	"health": 200.0,
+	"speed": 4.0,
+	"scene_path": "res://enemies/base_enemy.tscn",
+	"scale_uniform": 1.1,
+	"scale_y": 1.3
+  }
+]

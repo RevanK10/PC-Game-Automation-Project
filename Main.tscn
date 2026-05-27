@@ -1,0 +1,212 @@
+[gd_scene format=3 uid="uid://hx5ycqc0gn3"]
+
+[ext_resource type="Script" uid="uid://d3x6wrf5etdwo" path="res://Player.cs" id="1_fos0i"]
+[ext_resource type="Script" uid="uid://dbyvmqc5rajag" path="res://GameDataManager.cs" id="2_3dxm6"]
+[ext_resource type="PackedScene" uid="uid://qffmqdpw7glu" path="res://spear_projectile.tscn" id="2_lgr22"]
+[ext_resource type="Script" uid="uid://pudnxmqq5jeo" path="res://EnemySpawner.cs" id="3_lgr22"]
+[ext_resource type="Script" uid="uid://dbuvflio8h4iv" path="res://PlayerStats.cs" id="4_trn2v"]
+[ext_resource type="Script" uid="uid://bjn32cov38ni1" path="res://ArcadeUi.cs" id="5_03owx"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ig7tw"]
+albedo_color = Color(0, 0.6399028, 1.92523e-07, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_0xm2m"]
+material = SubResource("StandardMaterial3D_ig7tw")
+size = Vector3(100, 1, 100)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ig7tw"]
+size = Vector3(100, 1, 100)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_ig7tw"]
+energy_multiplier = 2.0
+
+[sub_resource type="Sky" id="Sky_ig7tw"]
+sky_material = SubResource("ProceduralSkyMaterial_ig7tw")
+
+[sub_resource type="Environment" id="Environment_0xm2m"]
+background_mode = 2
+sky = SubResource("Sky_ig7tw")
+ambient_light_source = 3
+ambient_light_color = Color(0.61222285, 1, 1, 1)
+tonemap_exposure = 3.0
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7dm0k"]
+
+[node name="Main" type="Node3D" unique_id=605687230]
+
+[node name="Floor" type="StaticBody3D" parent="." unique_id=1943444017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.76540565, 1.337595, -0.7898221)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor" unique_id=1171497031]
+mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor" unique_id=1826342515]
+shape = SubResource("BoxShape3D_ig7tw")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Floor" unique_id=1106275751]
+transform = Transform3D(1, 0, 0, 0, 0.7071067, 0.7071067, 0, -0.7071067, 0.7071067, 0, 16.457, 30)
+sky_mode = 2
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Floor" unique_id=996916216]
+environment = SubResource("Environment_0xm2m")
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+script = ExtResource("1_fos0i")
+SpearProjectile = ExtResource("2_lgr22")
+SpearContainer = NodePath("Head/SpearMarker")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=118393872]
+shape = SubResource("CapsuleShape3D_7dm0k")
+
+[node name="Head" type="Node3D" parent="Player" unique_id=1019229664]
+
+[node name="Camera3D" type="Camera3D" parent="Player/Head" unique_id=2146472359]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="SpearMarker" type="Marker3D" parent="Player/Head" unique_id=1223070686]
+
+[node name="SpearMesh" type="MeshInstance3D" parent="Player/Head/SpearMarker" unique_id=436853819]
+
+[node name="GameDataManager" type="Node3D" parent="." unique_id=782849721]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+script = ExtResource("2_3dxm6")
+
+[node name="EnemySpawner" type="Node3D" parent="GameDataManager" unique_id=552936789]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+script = ExtResource("3_lgr22")
+
+[node name="PlayerStats" type="Node3D" parent="." unique_id=428135126 node_paths=PackedStringArray("LevelLabel", "ExpLabel", "KillLabel")]
+script = ExtResource("4_trn2v")
+LevelLabel = NodePath("../HUD/VBoxContainer/LevelText")
+ExpLabel = NodePath("../HUD/VBoxContainer/ExpText")
+KillLabel = NodePath("../HUD/VBoxContainer/KillText")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=473801236]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD" unique_id=1974603290]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LevelText" type="Label" parent="HUD/VBoxContainer" unique_id=1258159007]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 2
+
+[node name="ExpText" type="Label" parent="HUD/VBoxContainer" unique_id=1036949874]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 2
+
+[node name="KillText" type="Label" parent="HUD/VBoxContainer" unique_id=642241075]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 2
+
+[node name="ArcadeUI" type="CanvasLayer" parent="." unique_id=912225237 node_paths=PackedStringArray("MainMenuPanel", "DifficultyMenuPanel", "GameOverPanel", "ScoreDisplayLabel")]
+script = ExtResource("5_03owx")
+MainMenuPanel = NodePath("MainMenu")
+DifficultyMenuPanel = NodePath("DifficultyMenu")
+GameOverPanel = NodePath("GameOverScreen")
+ScoreDisplayLabel = NodePath("GameOverScreen/ScoreBoardLabel")
+
+[node name="MainMenu" type="Control" parent="ArcadeUI" unique_id=722928173]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="ArcadeUI/MainMenu" unique_id=521062888]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+text = "ARCADE ARENA"
+
+[node name="StartGameButton" type="Button" parent="ArcadeUI/MainMenu" unique_id=25447123]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+text = "START GAME"
+
+[node name="DifficultyMenu" type="Control" parent="ArcadeUI" unique_id=72497077]
+visible = false
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EasyModeButton" type="Button" parent="ArcadeUI/DifficultyMenu" unique_id=249594438]
+layout_mode = 0
+offset_left = -50.0
+offset_right = -7.0
+offset_bottom = 31.0
+text = "Easy"
+
+[node name="MediumModeButton" type="Button" parent="ArcadeUI/DifficultyMenu" unique_id=904913475]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+text = "Medium"
+
+[node name="HardModeButton" type="Button" parent="ArcadeUI/DifficultyMenu" unique_id=1452365906]
+layout_mode = 0
+offset_left = 80.0
+offset_right = 127.0
+offset_bottom = 31.0
+text = "Hard"
+
+[node name="GameOverScreen" type="Control" parent="ArcadeUI" unique_id=328670586]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GameOverLabel" type="Label" parent="ArcadeUI/GameOverScreen" unique_id=1445085147]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 0
+offset_top = -150.0
+offset_right = 92.0
+offset_bottom = -101.0
+text = "GAME OVER
+"
+
+[node name="RestartButton" type="Button" parent="ArcadeUI/GameOverScreen" unique_id=1241866128]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+text = "RESTART"
+
+[node name="ScoreBoardLabel" type="Label" parent="ArcadeUI/GameOverScreen" unique_id=162748691]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 0
+offset_top = -75.0
+offset_right = 142.0
+offset_bottom = -52.0
+text = "Recent: 0 | High: 0"
+
+[connection signal="pressed" from="ArcadeUI/MainMenu/StartGameButton" to="ArcadeUI" method="_on_start_menu_button_pressed"]
+[connection signal="pressed" from="ArcadeUI/DifficultyMenu/EasyModeButton" to="ArcadeUI" method="_on_easy_mode_button_pressed"]
+[connection signal="pressed" from="ArcadeUI/DifficultyMenu/MediumModeButton" to="ArcadeUI" method="_on_medium_mode_button_pressed"]
+[connection signal="pressed" from="ArcadeUI/DifficultyMenu/HardModeButton" to="ArcadeUI" method="_on_hard_mode_button_pressed"]
+[connection signal="pressed" from="ArcadeUI/GameOverScreen/RestartButton" to="ArcadeUI" method="_on_restart_button_pressed"]
