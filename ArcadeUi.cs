@@ -44,9 +44,27 @@ public partial class ArcadeUi : CanvasLayer
 
 	public void SelectDifficulty(float multiplier)
 	{
+		// Save the multiplier for your baseline fallback scaling
 		ArcadeSaveSystem.DifficultyMultiplier = multiplier;
 		ArcadeSaveSystem.IsGamePlaying = true;
-		GetTree().ReloadCurrentScene();
+
+		// Find the manager and tell it which difficulty setting to build a prompt for
+		var dataManager = GetTree().Root.GetNodeOrNull<GameDataManager>("Main/GameDataManager");
+		if (dataManager != null)
+		{
+			// Translate the float multiplier into a clean string identifier
+			string settingName = "Medium";
+			if (multiplier <= 1.0f) settingName = "Easy";
+			else if (multiplier >= 2.0f) settingName = "Hard";
+
+			// Contact Gemini using our hidden automated prompt engine
+			dataManager.RequestAutomaticLevel(settingName);
+		}
+		else
+		{
+			// Fallback: If manager is missing, just reload standard local properties
+			GetTree().ReloadCurrentScene();
+		}
 	}
 
 	public void ShowGameOver()

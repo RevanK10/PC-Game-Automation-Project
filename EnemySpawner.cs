@@ -11,7 +11,7 @@ public partial class EnemySpawner : Node3D
 	private int _enemiesToSpawn = 3;
 	private float _waveDifficultyMultiplier = 1.0f;
 
-	// FIX: State lock variable prevents the frame-by-frame _Process loop 
+	// State lock variable prevents the frame-by-frame _Process loop 
 	// from re-triggering StartNextWave() while entities are still loading.
 	private bool _isWaveSpawning = false;
 
@@ -22,21 +22,22 @@ public partial class EnemySpawner : Node3D
 
 		_player = GetTree().Root.GetNodeOrNull<Node3D>("Main/Player");
 		
-		// Defer execution by one frame to guarantee GameDataManager has loaded the file first
+		// Defer execution by one frame to guarantee GameDataManager has loaded the API file first
 		Callable.From(StartNextWave).CallDeferred();
 	}
 
 	public override void _Process(double delta)
 	{
-		// Do not calculate waves or run timers if a match isn't currently active,
-		// or if a wave is currently in the middle of generation cycles.
+		// Do not calculate waves if a match isn't active, or if a wave is currently spawning
 		if (!ArcadeSaveSystem.IsGamePlaying || _isWaveSpawning) return;
 
 		// Monitor the 'enemies' group to see if the arena has been cleared
 		var activeEnemies = GetTree().GetNodesInGroup("enemies");
 		
-		// Only progress if the tree registry exists, the arena is clear, and the game has properly initialized
-		if (activeEnemies.Count == 0 && GameDataManager.EnemyRegistry != null && GameDataManager.EnemyRegistry.Count > 0 && _currentWave > 0)
+		// FIX: Point group checks directly to the new cloud configuration schema variables
+		if (activeEnemies.Count == 0 && 
+			GameDataManager.CurrentLevelData?.Waves != null && 
+			GameDataManager.CurrentLevelData.Waves.Count > 0)
 		{
 			StartNextWave();
 		}
@@ -44,7 +45,8 @@ public partial class EnemySpawner : Node3D
 
 	private void StartNextWave()
 	{
-		List<EnemyData> registry = GameDataManager.EnemyRegistry;
+		// FIX: Ingest from the live online Gemini configuration contract
+		List<EnemyData> registry = GameDataManager.CurrentLevelData?.Waves;
 		if (registry == null || registry.Count == 0) return;
 
 		// Engage lock to shield against execution overlaps from rapid frame ticks
@@ -70,7 +72,7 @@ public partial class EnemySpawner : Node3D
 
 	private void SpawnRandomEnemy(List<EnemyData> registry)
 	{
-		// 1. Pick a completely random enemy template from your live AI Studio registry data
+		// 1. Pick a completely random enemy template from your live AI Studio data payload
 		int randomIndex = GD.RandRange(0, registry.Count - 1);
 		EnemyData randomData = registry[randomIndex];
 
