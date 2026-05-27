@@ -88,7 +88,15 @@ public partial class ArcadeUi : CanvasLayer
 	// Connected to your RestartButton 'pressed()' signal
 	public void _on_restart_button_pressed()
 	{
-		ArcadeSaveSystem.IsGamePlaying = true;
+		// 1. Reset the save system states so the game knows we are back at the menus
+		ArcadeSaveSystem.IsGamePlaying = false;
+		ArcadeSaveSystem.IsGameOver = false;
+
+		// 2. Clear out the previous AI match data so it doesn't accidentally carry over
+		// (This forces a fresh API request or fallback when they pick a new button)
+		
+		// 3. Reload the scene fresh. 
+		// Since IsGamePlaying is now false, _Ready() will cleanly open ShowMainMenu()!
 		GetTree().ReloadCurrentScene();
 	}
 

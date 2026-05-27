@@ -27,7 +27,7 @@ public partial class GameDataManager : Node
 		AddChild(_httpNode);
 		_httpNode.RequestCompleted += OnRequestCompleted;
 
-		// FIXED: Changed ArcadeSaveSystem.HighScore to ArcadeSaveSystem.HighestScore
+		// Warm up high score profile from local disk storage instantly at launch
 		int warmUpCache = ArcadeSaveSystem.HighestScore;
 	}
 
@@ -109,9 +109,27 @@ public partial class GameDataManager : Node
 	{
 		_isRequesting = false;
 
+		// UPGRADED: Fallback layer handles network drops and 503 errors gracefully
 		if (responseCode != 200)
 		{
-			GD.PrintErr($"❌ HTTP Request Failed with code: {responseCode}");
+			GD.PrintErr($"❌ HTTP Request Failed with code: {responseCode}. Activating local offline fallback configuration...");
+			
+			// Build a manual stable balance backup using your 3 explicitly supported archetypes
+			CurrentLevelData = new LevelConfig()
+			{
+				LevelId = "offline_fallback_safety",
+				DifficultyName = "Offline Emergency Mode",
+				IsBossLevel = false,
+				Waves = new List<EnemyData>()
+				{
+					new EnemyData() { name = "Small Brown Robber", health = 100f, speed = 4.0f, scene_path = "res://enemies/base_enemy.tscn" },
+					new EnemyData() { name = "Medium Silver Soldier", health = 180f, speed = 3.0f, scene_path = "res://enemies/base_enemy.tscn" },
+					new EnemyData() { name = "Big Red Demon", health = 250f, speed = 2.0f, scene_path = "res://enemies/base_enemy.tscn" }
+				}
+			};
+
+			// Load the main gameplay level instantly using the fallback data
+			GetTree().ChangeSceneToFile("res://main.tscn");
 			return;
 		}
 
@@ -137,6 +155,7 @@ public partial class GameDataManager : Node
 		catch (Exception e)
 		{
 			GD.PrintErr($"❌ Failed parsing online AI response data: {e.Message}");
+			GetTree().ChangeSceneToFile("res://main.tscn");
 		}
 	}
 }
