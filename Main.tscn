@@ -6,9 +6,12 @@
 [ext_resource type="Script" uid="uid://pudnxmqq5jeo" path="res://EnemySpawner.cs" id="3_lgr22"]
 [ext_resource type="Script" uid="uid://dbuvflio8h4iv" path="res://PlayerStats.cs" id="4_trn2v"]
 [ext_resource type="Script" uid="uid://bjn32cov38ni1" path="res://ArcadeUi.cs" id="5_03owx"]
+[ext_resource type="Script" uid="uid://drpyp7i5rc6wd" path="res://KillZone.cs" id="7_lgr22"]
+[ext_resource type="PackedScene" uid="uid://dih2ibmyh8dc5" path="res://Scenes/tree.tscn" id="8_trn2v"]
+[ext_resource type="AudioStream" uid="uid://d0oxbc1qea0bk" path="res://Sounds/Forest_Ambience.mp3" id="9_03owx"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ig7tw"]
-albedo_color = Color(0, 0.6399028, 1.92523e-07, 1)
+albedo_color = Color(0, 0.30980393, 0, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_0xm2m"]
 material = SubResource("StandardMaterial3D_ig7tw")
@@ -27,10 +30,15 @@ sky_material = SubResource("ProceduralSkyMaterial_ig7tw")
 background_mode = 2
 sky = SubResource("Sky_ig7tw")
 ambient_light_source = 3
-ambient_light_color = Color(0.61222285, 1, 1, 1)
-tonemap_exposure = 3.0
+ambient_light_color = Color(5.1018596e-06, 0.6782474, 0.68316776, 1)
+tonemap_exposure = 2.0
+fog_enabled = true
+fog_density = 0.005
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7dm0k"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_trn2v"]
+size = Vector3(500, 2, 500)
 
 [node name="Main" type="Node3D" unique_id=605687230]
 
@@ -45,6 +53,7 @@ shape = SubResource("BoxShape3D_ig7tw")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Floor" unique_id=1106275751]
 transform = Transform3D(1, 0, 0, 0, 0.7071067, 0.7071067, 0, -0.7071067, 0.7071067, 0, 16.457, 30)
+light_energy = 0.7
 sky_mode = 2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Floor" unique_id=996916216]
@@ -123,8 +132,9 @@ grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="ArcadeUI/MainMenu" unique_id=521062888]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
+offset_top = -50.0
+offset_right = 120.0
+offset_bottom = -27.0
 text = "ARCADE ARENA"
 
 [node name="StartGameButton" type="Button" parent="ArcadeUI/MainMenu" unique_id=25447123]
@@ -204,6 +214,126 @@ offset_top = -75.0
 offset_right = 142.0
 offset_bottom = -52.0
 text = "Recent: 0 | High: 0"
+
+[node name="KillZone" type="Area3D" parent="." unique_id=1266544008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5, 0)
+collision_layer = 4
+script = ExtResource("7_lgr22")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="KillZone" unique_id=1959154676]
+shape = SubResource("BoxShape3D_trn2v")
+
+[node name="TreesInstances" type="Node3D" parent="." unique_id=235513173]
+
+[node name="Tree" parent="TreesInstances" unique_id=204423600 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.390779, 1.837595, -0.025886536)
+
+[node name="Tree2" parent="TreesInstances" unique_id=502334469 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.09402, 1.837595, 19.762514)
+
+[node name="Tree3" parent="TreesInstances" unique_id=640692835 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.154343, 1.837595, 10.516203)
+
+[node name="Tree4" parent="TreesInstances" unique_id=1107401835 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.02876, 1.8375931, -22.828205)
+
+[node name="Tree5" parent="TreesInstances" unique_id=1241257576 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.445078, 1.8375931, -16.224483)
+
+[node name="Tree6" parent="TreesInstances" unique_id=1901596004 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.49758, 1.8375969, 43.25372)
+
+[node name="Tree7" parent="TreesInstances" unique_id=1640042113 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.383821, 1.8375931, 42.859238)
+
+[node name="Tree8" parent="TreesInstances" unique_id=1991837512 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.323503, 1.8375969, 24.035513)
+
+[node name="Tree9" parent="TreesInstances" unique_id=2121723143 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.7555304, 1.8375893, 6.7823315)
+
+[node name="Tree10" parent="TreesInstances" unique_id=1721606108 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.664564, 1.8375931, 2.6309223)
+
+[node name="Tree11" parent="TreesInstances" unique_id=152341711 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42.73072, 1.8375969, 1.7064114)
+
+[node name="Tree12" parent="TreesInstances" unique_id=593874795 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45.018784, 1.8375931, -41.19597)
+
+[node name="Tree13" parent="TreesInstances" unique_id=2057764110 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.21534, 1.8375893, -9.041641)
+
+[node name="Tree14" parent="TreesInstances" unique_id=243522856 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.153187, 1.8375931, -22.231663)
+
+[node name="Tree15" parent="TreesInstances" unique_id=1510412324 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35.023857, 1.8375893, 21.268885)
+
+[node name="Tree16" parent="TreesInstances" unique_id=26512953 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.7003784, 1.8376465, -35.438236)
+
+[node name="Tree17" parent="TreesInstances" unique_id=1116740977 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43.5506, 1.8376465, 27.183544)
+
+[node name="Tree18" parent="TreesInstances" unique_id=174628467 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.618011, 1.8376465, 38.28468)
+
+[node name="Tree19" parent="TreesInstances" unique_id=878487877 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.546829, 1.8376465, 43.40828)
+
+[node name="Tree20" parent="TreesInstances" unique_id=330969097 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46.39705, 1.8376465, 39.13861)
+
+[node name="Tree21" parent="TreesInstances" unique_id=1980250236 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.134872, 1.8376465, -43.123634)
+
+[node name="Tree22" parent="TreesInstances" unique_id=1931924353 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.786545, 1.8376465, -42.83899)
+
+[node name="Tree23" parent="TreesInstances" unique_id=41582785 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43.83525, 1.8376465, -8.681658)
+
+[node name="Tree24" parent="TreesInstances" unique_id=1675429267 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.15735, 1.8376465, 29.176054)
+
+[node name="Tree25" parent="TreesInstances" unique_id=1674418257 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46.96633, 1.8376465, -33.16108)
+
+[node name="Tree26" parent="TreesInstances" unique_id=1455064601 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.902649, 1.8376465, -5.5505676)
+
+[node name="Tree27" parent="TreesInstances" unique_id=2024455002 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.486908, 1.8376465, 34.868942)
+
+[node name="Tree28" parent="TreesInstances" unique_id=2094680085 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464508, 1.8376465, 30.029993)
+
+[node name="Tree29" parent="TreesInstances" unique_id=1064878228 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1385651, 1.8376465, 18.928858)
+
+[node name="Tree30" parent="TreesInstances" unique_id=718492764 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.39328, 1.8376465, 7.2584324)
+
+[node name="Tree31" parent="TreesInstances" unique_id=1509036045 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2696686, 1.8376465, -4.4119883)
+
+[node name="Tree32" parent="TreesInstances" unique_id=1271276508 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8464508, 1.8376465, -14.374545)
+
+[node name="Tree33" parent="TreesInstances" unique_id=2071753664 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.756577, 1.8376465, 30.314632)
+
+[node name="Tree34" parent="TreesInstances" unique_id=1721163800 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.1310883, 1.8376465, -26.04497)
+
+[node name="Tree35" parent="TreesInstances" unique_id=1016154505 instance=ExtResource("8_trn2v")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.880173, 1.8376465, 16.6517)
+
+[node name="ForestAmbience" type="AudioStreamPlayer" parent="." unique_id=1186370459]
+stream = ExtResource("9_03owx")
+autoplay = true
+bus = &"Music"
 
 [connection signal="pressed" from="ArcadeUI/MainMenu/StartGameButton" to="ArcadeUI" method="_on_start_menu_button_pressed"]
 [connection signal="pressed" from="ArcadeUI/DifficultyMenu/EasyModeButton" to="ArcadeUI" method="_on_easy_mode_button_pressed"]
