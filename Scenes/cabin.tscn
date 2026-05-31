@@ -1,6 +1,10 @@
 [gd_scene format=3 uid="uid://cduk1unmftkva"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5p74v"]
+albedo_color = Color(0.4499355, 0.37964666, 0.05471252, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_5p74v"]
+material = SubResource("StandardMaterial3D_5p74v")
 size = Vector3(0.5, 4, 8)
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_5p74v"]
@@ -8,7 +12,11 @@ size = Vector3(0.5, 4, 8)
 [sub_resource type="BoxShape3D" id="BoxShape3D_ms4um"]
 size = Vector3(0.5, 4, 8)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ms4um"]
+albedo_color = Color(0.4509804, 0.38039216, 0.05490196, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_ms4um"]
+material = SubResource("StandardMaterial3D_ms4um")
 size = Vector3(0.5, 4, 8)
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_c28uo"]
@@ -16,25 +24,41 @@ size = Vector3(0.5, 4, 8)
 [sub_resource type="BoxShape3D" id="BoxShape3D_xm2hj"]
 size = Vector3(0.5, 4, 8)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c28uo"]
+albedo_color = Color(0.4509804, 0.38039216, 0.05490196, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_c28uo"]
+material = SubResource("StandardMaterial3D_c28uo")
 size = Vector3(0.5, 4, 6.5)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_h4odu"]
 size = Vector3(0.5, 4, 6.5)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xm2hj"]
+albedo_color = Color(0.4509804, 0.38039216, 0.05490196, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_xm2hj"]
+material = SubResource("StandardMaterial3D_xm2hj")
 size = Vector3(0.5, 4, 3)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_f8aqm"]
 size = Vector3(0.5, 4, 3)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h4odu"]
+albedo_color = Color(0.4509804, 0.38039216, 0.05490196, 1)
+
 [sub_resource type="BoxMesh" id="BoxMesh_h4odu"]
+material = SubResource("StandardMaterial3D_h4odu")
 size = Vector3(0.5, 4, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_74jxe"]
 size = Vector3(0.5, 4, 1)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_f8aqm"]
+albedo_color = Color(0.5065612, 0.5029675, 0.011794152, 1)
+
 [sub_resource type="PrismMesh" id="PrismMesh_f8aqm"]
+material = SubResource("StandardMaterial3D_f8aqm")
 size = Vector3(7, 2, 9)
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_cvv4n"]
