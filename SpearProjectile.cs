@@ -31,6 +31,14 @@ public partial class SpearProjectile : RigidBody3D
 			Freeze = true; 
 			SetDeferred("contact_monitor", false);
 
+			// --- UPGRADED: SPEAR AUDIO TRIGGER ENGINE ---
+			// Locate our sound component and play it immediately on contact
+			var impactSound = GetNodeOrNull<AudioStreamPlayer3D>("ImpactAudio");
+			if (impactSound != null)
+			{
+				impactSound.Play();
+			}
+
 			// Check if the entity we ran into belongs to our dynamic enemy group
 			if (body.IsInGroup("enemies"))
 			{
@@ -56,6 +64,8 @@ public partial class SpearProjectile : RigidBody3D
 		Basis currentGlobalBasis = GlobalBasis;
 
 		// 2. Shut off any visual/physics loops on this spear node so it behaves strictly as a cosmetic attachment
+		// NOTE: ProcessModeEnum.Disabled is perfectly fine here! The AudioStreamPlayer3D will finish 
+		// playing its sound because it was already triggered and started running on the native audio thread.
 		ProcessMode = ProcessModeEnum.Disabled;
 
 		// Disable the spear's collision shapes so it doesn't bump into other flying objects

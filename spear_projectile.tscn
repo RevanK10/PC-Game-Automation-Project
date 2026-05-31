@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c7kbvg5ukjsug" path="res://SpearProjectile.cs" id="1_xe0h2"]
 [ext_resource type="ArrayMesh" uid="uid://upr3il4fubae" path="res://models/assets/SpearModel.obj" id="2_sy4ia"]
+[ext_resource type="AudioStream" uid="uid://cuutdhwodj43y" path="res://Sounds/footstep_concrete_001.ogg" id="3_3uxu7"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7pofc"]
 radius = 0.024902344
@@ -23,3 +24,10 @@ shape = SubResource("CapsuleShape3D_7pofc")
 [node name="SpearMesh" type="MeshInstance3D" parent="." unique_id=1525804364]
 transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0)
 mesh = ExtResource("2_sy4ia")
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="." unique_id=975688250]
+stream = ExtResource("3_3uxu7")
+volume_db = 4.0
+unit_size = 15.0
+max_distance = 50.0
+bus = &"SFX"

@@ -112,9 +112,20 @@ public partial class EnemySpawner : Node3D
 		// 6. Calculate a circular spawn offset around the player's current location
 		Vector3 playerPos = (_player != null && IsInstanceValid(_player)) ? _player.GlobalPosition : Vector3.Zero;
 		float randomAngle = (float)GD.RandRange(0, Mathf.Tau);
-		Vector3 spawnOffset = new Vector3(Mathf.Cos(randomAngle), 0, Mathf.Sin(randomAngle)) * SpawnRadius;
+		float randomDistance = (float)GD.RandRange(5.0f, SpawnRadius);
+		Vector3 spawnOffset = new Vector3(Mathf.Cos(randomAngle), 0, Mathf.Sin(randomAngle)) * randomDistance;
 
-		// Move the enemy to their final perimeter ring coordinates
-		enemyInstance.GlobalPosition = playerPos + spawnOffset;
+		// Raw mathematical destination point (could point out into the empty void!)
+		Vector3 rawSpawnPosition = playerPos + spawnOffset;
+
+		// --- UPGRADED: NAVIGATION MESH POSITION CLAMPING ---
+		// Fetch the current active navigation map handle from the 3D physics server
+		Rid mapRid = GetWorld3D().NavigationMap;
+
+		// Force-snap the raw position back onto the closest valid spot on your blue forest floor mesh
+		Vector3 safeSpawnPosition = NavigationServer3D.MapGetClosestPoint(mapRid, rawSpawnPosition);
+
+		// Safely anchor the enemy instance inside the arena layout boundaries
+		enemyInstance.GlobalPosition = safeSpawnPosition;
 	}
 }
