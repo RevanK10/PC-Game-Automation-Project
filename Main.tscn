@@ -120,16 +120,30 @@ grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="ArcadeUI/MainMenu" unique_id=521062888]
 layout_mode = 0
-offset_top = -50.0
-offset_right = 120.0
-offset_bottom = -27.0
+offset_left = -100.0
+offset_top = -200.0
+offset_right = 20.0
+offset_bottom = -177.0
+scale = Vector2(2, 2)
 text = "ARCADE ARENA"
 
 [node name="StartGameButton" type="Button" parent="ArcadeUI/MainMenu" unique_id=25447123]
 layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
+offset_left = -50.0
+offset_top = 250.0
+offset_right = 56.0
+offset_bottom = 281.0
 text = "START GAME"
+
+[node name="LineEdit" type="LineEdit" parent="ArcadeUI/MainMenu" unique_id=1330782125]
+layout_mode = 0
+offset_left = -50.0
+offset_top = -108.0
+offset_right = 80.0
+offset_bottom = -73.0
+placeholder_text = "Enter API Key"
+backspace_deletes_composite_character_enabled = true
+secret = true
 
 [node name="DifficultyMenu" type="Control" parent="ArcadeUI" unique_id=72497077]
 visible = false
@@ -167,6 +181,7 @@ offset_bottom = 31.0
 text = "Hard"
 
 [node name="GameOverScreen" type="Control" parent="ArcadeUI" unique_id=328670586]
+visible = false
 layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5

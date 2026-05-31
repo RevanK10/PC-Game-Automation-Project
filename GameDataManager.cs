@@ -39,10 +39,19 @@ public partial class GameDataManager : Node
 			return;
 		}
 
-		string apiKey = OS.GetEnvironment("GEMINI_API_KEY");
+		// UPGRADED: No longer reads from system environment variables. 
+		// Now safely checks the user-pasted local text file built by the main menu.
+		string apiKey = "";
+		if (FileAccess.FileExists("user://api_key.txt"))
+		{
+			using var file = FileAccess.Open("user://api_key.txt", FileAccess.ModeFlags.Read);
+			apiKey = file.GetAsText().Trim();
+		}
+
 		if (string.IsNullOrEmpty(apiKey))
 		{
-			GD.PrintErr("❌ ERROR: GEMINI_API_KEY environment variable is not set!");
+			GD.PrintErr("❌ ERROR: No user API Key found in user://api_key.txt! Activating safety fallback.");
+			TriggerOfflineFallback();
 			return;
 		}
 
@@ -50,15 +59,14 @@ public partial class GameDataManager : Node
 		string fullUrl = $"{GeminiUrl}?key={apiKey}";
 
 		// 1. STRICT SYSTEM INSTRUCTION CONTRACT
-		// We explicitly command Gemini to never hallucinate or invent random names.
 		string systemInstruction = 
 			"You are an automated game-engine balance system. Your sole job is to interpret " +
 			"the selected difficulty tier and return a raw JSON configuration dataset balancing enemy stats. " +
 			"CRITICAL RULES:\n" +
 			"1. You are ONLY allowed to generate enemies chosen from this exact pool of 3 distinct names:\n" +
-			"   - 'Big Red Demon'\n" +
-			"   - 'Small Brown Robber'\n" +
-			"   - 'Medium Silver Soldier'\n" +
+			"   - 'Demon'\n" +
+			"   - 'Robber'\n" +
+			"   - 'Soldier'\n" +
 			"2. Never use any other names.\n" +
 			"3. Do not output markdown text or markdown wrappers like ```json.";
 
@@ -67,23 +75,23 @@ public partial class GameDataManager : Node
 		if (difficultySetting == "Easy")
 		{
 			difficultyDirectives = "Generate an introductory layout. Include exactly 3 enemies in total (one of each type). " +
-								   "For 'Small Brown Robber', set speed around 3.5, health to 60. " +
-								   "For 'Medium Silver Soldier', set speed around 2.5, health to 90. " +
-								   "For 'Big Red Demon', set speed around 1.5, health to 120. Set exp_reward high (30-50).";
+								   "For 'Robber', set speed around 3.5, health to 60. " +
+								   "For 'Soldier', set speed around 2.5, health to 90. " +
+								   "For 'Demon', set speed around 1.5, health to 120. Set exp_reward high (30-50).";
 		}
 		else if (difficultySetting == "Hard")
 		{
 			difficultyDirectives = "Generate an intense arcade layout. Include exactly 3 enemies in total (one of each type). " +
-								   "Scale stats aggressively! For 'Small Brown Robber', push speed up to 5.5, health to 200. " +
-								   "For 'Medium Silver Soldier', push speed to 4.0, health to 300. " +
-								   "For 'Big Red Demon', push speed to 3.0, health to 450. Set exp_reward tightly around 10-15.";
+								   "Scale stats aggressively! For 'Robber', push speed up to 5.5, health to 200. " +
+								   "For 'Soldier', push speed to 4.0, health to 300. " +
+								   "For 'Demon', push speed to 3.0, health to 450. Set exp_reward tightly around 10-15.";
 		}
 		else 
 		{
 			difficultyDirectives = "Generate a standard, balanced arcade layout. Include exactly 3 enemies in total (one of each type). " +
-								   "For 'Small Brown Robber', speed 4.0, health 100. " +
-								   "For 'Medium Silver Soldier', speed 3.0, health 180. " +
-								   "For 'Big Red Demon', speed 2.0, health 250. Keep exp_reward balanced around 20-25.";
+								   "For 'Robber', speed 4.0, health 100. " +
+								   "For 'Soldier', speed 3.0, health 180. " +
+								   "For 'Demon', speed 2.0, health 250. Keep exp_reward balanced around 20-25.";
 		}
 
 		string promptText = $"{difficultyDirectives} " +
@@ -109,27 +117,10 @@ public partial class GameDataManager : Node
 	{
 		_isRequesting = false;
 
-		// UPGRADED: Fallback layer handles network drops and 503 errors gracefully
 		if (responseCode != 200)
 		{
 			GD.PrintErr($"❌ HTTP Request Failed with code: {responseCode}. Activating local offline fallback configuration...");
-			
-			// Build a manual stable balance backup using your 3 explicitly supported archetypes
-			CurrentLevelData = new LevelConfig()
-			{
-				LevelId = "offline_fallback_safety",
-				DifficultyName = "Offline Emergency Mode",
-				IsBossLevel = false,
-				Waves = new List<EnemyData>()
-				{
-					new EnemyData() { name = "Small Brown Robber", health = 100f, speed = 4.0f, scene_path = "res://enemies/base_enemy.tscn" },
-					new EnemyData() { name = "Medium Silver Soldier", health = 180f, speed = 3.0f, scene_path = "res://enemies/base_enemy.tscn" },
-					new EnemyData() { name = "Big Red Demon", health = 250f, speed = 2.0f, scene_path = "res://enemies/base_enemy.tscn" }
-				}
-			};
-
-			// Load the main gameplay level instantly using the fallback data
-			GetTree().ChangeSceneToFile("res://main.tscn");
+			TriggerOfflineFallback();
 			return;
 		}
 
@@ -149,13 +140,30 @@ public partial class GameDataManager : Node
 			
 			GD.Print($"🎉 Online AI Generation Success! Loaded Level: {CurrentLevelData.DifficultyName}");
 			
-			// THE LOADING SCREEN TRICK: Switches scenes to the game arena now that data is successfully saved in RAM
 			GetTree().ChangeSceneToFile("res://main.tscn"); 
 		}
 		catch (Exception e)
 		{
 			GD.PrintErr($"❌ Failed parsing online AI response data: {e.Message}");
-			GetTree().ChangeSceneToFile("res://main.tscn");
+			TriggerOfflineFallback();
 		}
+	}
+
+	// Helper cleanup function so code isn't duplicated across errors
+	private void TriggerOfflineFallback()
+	{
+		CurrentLevelData = new LevelConfig()
+		{
+			LevelId = "offline_fallback_safety",
+			DifficultyName = "Offline Emergency Mode",
+			IsBossLevel = false,
+			Waves = new List<EnemyData>()
+			{
+				new EnemyData() { name = "Small Brown Robber", health = 100f, speed = 4.0f, scene_path = "res://enemies/base_enemy.tscn" },
+				new EnemyData() { name = "Medium Silver Soldier", health = 180f, speed = 3.0f, scene_path = "res://enemies/base_enemy.tscn" },
+				new EnemyData() { name = "Big Red Demon", health = 250f, speed = 2.0f, scene_path = "res://enemies/base_enemy.tscn" }
+			}
+		};
+		GetTree().ChangeSceneToFile("res://main.tscn");
 	}
 }

@@ -78,6 +78,9 @@ public partial class Enemy : CharacterBody3D
 		var meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
 		var collisionShape = GetNode<CollisionShape3D>("CollisionShape3D");
 		
+		// ADDED: Fetch the Label3D node child
+		var nameLabel = GetNodeOrNull<Label3D>("Label3D");
+		
 		AddToGroup("enemies");
 		GD.Print($"[Spawned] {EnemyName} added to 'enemies' group.");
 
@@ -135,6 +138,18 @@ public partial class Enemy : CharacterBody3D
 			uniqueCapsule.Height = 2.0f * targetScaleY;
 
 			collisionShape.Shape = uniqueCapsule;
+		}
+
+		// --- UPDATED FLOATING TEXT SETTING ---
+		if (nameLabel != null)
+		{
+			nameLabel.Text = EnemyName;
+			
+			// Dynamic Height Adjustment: Sets the text offset comfortably above the capsule's total height
+			// Base height is 2.0m * targetScaleY. We cut it in half because the origin is at the center, 
+			// then add an extra 0.5 meters of clean air padding.
+			float floatingHeightPadding = (2.0f * targetScaleY / 2.0f) + 0.5f;
+			nameLabel.Position = new Vector3(0, floatingHeightPadding, 0);
 		}
 
 		GD.Print($"[AI Ingest Success] {EnemyName} initialized with {Health} HP, {Speed} Speed. Radius: {0.5f * targetScaleUniform}, Height: {2.0f * targetScaleY}");

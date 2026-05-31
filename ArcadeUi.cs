@@ -6,18 +6,27 @@ public partial class ArcadeUi : CanvasLayer
 	[Export] public Control MainMenuPanel;
 	[Export] public Control DifficultyMenuPanel;
 	[Export] public Control GameOverPanel;
-	[Export] public Control LoadingPanel; // ADDED: Drag your loading message container node here in the Inspector
+	[Export] public Control LoadingPanel; 
 	[Export] public Label ScoreDisplayLabel;
+	
+	// ADDED: Drag your new LineEdit node here in the Inspector
+	[Export] public LineEdit ApiKeyInput; 
 
 	public override void _Ready()
 	{
 		HideAllPanels();
 
-		// Now it checks the explicit flag we set when the player dies
+		// NOW AUTOMATED: If the player already saved a key previously, auto-fill it for convenience!
+		if (ApiKeyInput != null && FileAccess.FileExists("user://api_key.txt"))
+		{
+			using var file = FileAccess.Open("user://api_key.txt", FileAccess.ModeFlags.Read);
+			ApiKeyInput.Text = file.GetAsText().Trim();
+		}
+
 		if (ArcadeSaveSystem.IsGameOver)
 		{
 			ShowGameOver();
-			ArcadeSaveSystem.IsGameOver = false; // Reset it so it doesn't show again
+			ArcadeSaveSystem.IsGameOver = false; 
 		}
 		else if (!ArcadeSaveSystem.IsGamePlaying)
 		{
@@ -40,35 +49,40 @@ public partial class ArcadeUi : CanvasLayer
 	// Connected to your StartGameButton 'pressed()' signal
 	public void _on_start_menu_button_pressed()
 	{
+		// MODIFIED: Save the text from the LineEdit to local storage right when they click "Play"
+		if (ApiKeyInput != null)
+		{
+			string enteredKey = ApiKeyInput.Text.StripEdges();
+			if (!string.IsNullOrEmpty(enteredKey))
+			{
+				using var file = FileAccess.Open("user://api_key.txt", FileAccess.ModeFlags.Write);
+				file.StoreString(enteredKey);
+			}
+		}
+
 		MainMenuPanel?.Hide();
 		DifficultyMenuPanel?.Show();
 	}
 
 	public void SelectDifficulty(float multiplier)
 	{
-		// Save the multiplier for your baseline fallback scaling
 		ArcadeSaveSystem.DifficultyMultiplier = multiplier;
 		ArcadeSaveSystem.IsGamePlaying = true;
 
-		// UPGRADED: Immediately switch the UI into a loading state so the buttons vanish instantly
 		DifficultyMenuPanel?.Hide();
 		LoadingPanel?.Show();
 
-		// Find the manager and tell it which difficulty setting to build a prompt for
 		var dataManager = GetTree().Root.GetNodeOrNull<GameDataManager>("Main/GameDataManager");
 		if (dataManager != null)
 		{
-			// Translate the float multiplier into a clean string identifier
 			string settingName = "Medium";
 			if (multiplier <= 1.0f) settingName = "Easy";
 			else if (multiplier >= 2.0f) settingName = "Hard";
 
-			// Contact Gemini using our hidden automated prompt engine
 			dataManager.RequestAutomaticLevel(settingName);
 		}
 		else
 		{
-			// Fallback: If manager is missing, just reload standard local properties
 			GetTree().ReloadCurrentScene();
 		}
 	}
@@ -85,18 +99,10 @@ public partial class ArcadeUi : CanvasLayer
 		}
 	}
 
-	// Connected to your RestartButton 'pressed()' signal
 	public void _on_restart_button_pressed()
 	{
-		// 1. Reset the save system states so the game knows we are back at the menus
 		ArcadeSaveSystem.IsGamePlaying = false;
 		ArcadeSaveSystem.IsGameOver = false;
-
-		// 2. Clear out the previous AI match data so it doesn't accidentally carry over
-		// (This forces a fresh API request or fallback when they pick a new button)
-		
-		// 3. Reload the scene fresh. 
-		// Since IsGamePlaying is now false, _Ready() will cleanly open ShowMainMenu()!
 		GetTree().ReloadCurrentScene();
 	}
 
@@ -105,10 +111,9 @@ public partial class ArcadeUi : CanvasLayer
 		MainMenuPanel?.Hide();
 		DifficultyMenuPanel?.Hide();
 		GameOverPanel?.Hide();
-		LoadingPanel?.Hide(); // ADDED
+		LoadingPanel?.Hide();
 	}
 
-	// Difficulty Button Direct Callbacks
 	public void _on_easy_mode_button_pressed() => SelectDifficulty(1.0f);
 	public void _on_medium_mode_button_pressed() => SelectDifficulty(1.5f);
 	public void _on_hard_mode_button_pressed() => SelectDifficulty(2.0f);
