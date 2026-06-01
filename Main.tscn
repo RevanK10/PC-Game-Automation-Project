@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://hx5ycqc0gn3"]
 
+[ext_resource type="Script" uid="uid://cpivxf84p0k3k" path="res://Main.cs" id="1_20pc6"]
 [ext_resource type="Script" uid="uid://d3x6wrf5etdwo" path="res://Player.cs" id="1_fos0i"]
 [ext_resource type="Script" uid="uid://dbyvmqc5rajag" path="res://GameDataManager.cs" id="2_3dxm6"]
 [ext_resource type="PackedScene" uid="uid://qffmqdpw7glu" path="res://spear_projectile.tscn" id="2_lgr22"]
@@ -46,6 +47,7 @@ fog_enabled = true
 fog_density = 0.005
 
 [node name="Main" type="Node3D" unique_id=605687230]
+script = ExtResource("1_20pc6")
 
 [node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
