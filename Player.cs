@@ -13,6 +13,12 @@ public partial class Player : CharacterBody3D
 	[Export] public PackedScene SpearProjectile; 
 	[Export] public Node3D SpearContainer;      
 	[Export] public float CooldownTime = 0.5f;
+
+	[Export] public Control DamageOverlayLayer;
+	[Export] public AudioStreamPlayer DamageAudioPlayer;
+	
+	// Exported variable tracking your UI text layout container
+	[Export] public Label HealthLabel;
 	
 	private Node3D _head;
 	private Camera3D _camera;
@@ -21,6 +27,9 @@ public partial class Player : CharacterBody3D
 	private bool _canThrow = true;
 	private Timer _cooldownTimer;
 	private bool _isDrawing = false;
+
+	private float _flashDurationTimer = 0.0f;
+	private const float MaxFlashDuration = 0.15f; 
 
 	public override void _Ready()
 	{
@@ -31,6 +40,9 @@ public partial class Player : CharacterBody3D
 		
 		if (SpearContainer == null) 
 			SpearContainer = GetNodeOrNull<Node3D>("Head/SpearMarker");
+
+		if (DamageAudioPlayer == null)
+			DamageAudioPlayer = GetNodeOrNull<AudioStreamPlayer>("DamageAudioPlayer");
 
 		// --- ANTI-LAUNCH DEPLOYMENT ---
 		Velocity = Vector3.Zero;
@@ -60,18 +72,81 @@ public partial class Player : CharacterBody3D
 		_cooldownTimer.OneShot = true;
 		_cooldownTimer.Timeout += () => _canThrow = true;
 		AddChild(_cooldownTimer);
+
+		// --- DYNAMIC HEALTH UI LOOKUP ---
+		if (HealthLabel == null)
+		{
+			// Fallback 1: Absolute Tree Path
+			HealthLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/HealthLabel");
+			
+			// Fallback 2: Check Sibling Node Structures if Main is nested
+			if (HealthLabel == null)
+			{
+				HealthLabel = GetNodeOrNull<Label>("../ArcadeUI/HealthLabel");
+			}
+		}
+		
+		UpdateHealthUI();
 	}
 
 	public void TakeDamage(float amount)
 	{
 		if (!ArcadeSaveSystem.IsGamePlaying) return;
 
+		if (DamageOverlayLayer == null)
+		{
+			DamageOverlayLayer = GetTree().Root.GetNodeOrNull<Control>("/root/Main/DamagerOverlayManager/DamageOverlay");
+		}
+
+		// Dynamic Lookup Fallback Guard
+		if (HealthLabel == null)
+		{
+			HealthLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/HealthLabel") ?? 
+						  GetNodeOrNull<Label>("../ArcadeUI/HealthLabel");
+		}
+
 		CurrentHealth -= amount;
 		GD.Print($"[PLAYER HEALTH] Damaged by {amount:F1}. Status: {CurrentHealth:F1}/{MaxHealth}");
+
+		// Update our screen numbers actively inside our combat calculations frame
+		UpdateHealthUI();
+
+		if (DamageOverlayLayer != null)
+		{
+			DamageOverlayLayer.Visible = true;
+			
+			Color curColor = DamageOverlayLayer.SelfModulate;
+			curColor.A = 1.0f;
+			DamageOverlayLayer.SelfModulate = curColor;
+
+			_flashDurationTimer = MaxFlashDuration; 
+		}
+		else
+		{
+			GD.PrintErr("❌ PATH ERROR: Player script cannot find: /root/Main/DamagerOverlayManager/DamageOverlay");
+		}
+
+		if (DamageAudioPlayer != null && !DamageAudioPlayer.Playing)
+		{
+			DamageAudioPlayer.Play();
+		}
 
 		if (CurrentHealth <= 0)
 		{
 			GameOver();
+		}
+	}
+
+	private void UpdateHealthUI()
+	{
+		if (HealthLabel != null)
+		{
+			HealthLabel.Text = $"HP: {Mathf.Max(CurrentHealth, 0.0f):F0} / {MaxHealth:F0}";
+			GD.Print($"[UI SYNC] Updated HealthLabel text to: {HealthLabel.Text}");
+		}
+		else
+		{
+			GD.PrintErr("❌ UI LINKAGE ERROR: HealthLabel reference is null. Text cannot be set!");
 		}
 	}
 
@@ -92,14 +167,38 @@ public partial class Player : CharacterBody3D
 			GD.Print($"🏆 NEW HIGH SCORE: {ArcadeSaveSystem.HighestScore}!");
 		}
 
+		if (DamageOverlayLayer != null)
+		{
+			DamageOverlayLayer.Visible = false;
+		}
+
 		GetTree().ReloadCurrentScene();
+	}
+
+	public override void _Process(double delta)
+	{
+		if (!ArcadeSaveSystem.IsGamePlaying || DamageOverlayLayer == null || !DamageOverlayLayer.Visible) return;
+
+		if (_flashDurationTimer > 0.0f)
+		{
+			_flashDurationTimer -= (float)delta;
+			
+			Color curColor = DamageOverlayLayer.SelfModulate;
+			curColor.A = Mathf.Max(_flashDurationTimer / MaxFlashDuration, 0.0f);
+			DamageOverlayLayer.SelfModulate = curColor;
+
+			if (_flashDurationTimer <= 0.0f)
+			{
+				DamageOverlayLayer.Visible = false;
+			}
+		}
 	}
 
 	public override void _Input(InputEvent @event)
 	{
 		if (!ArcadeSaveSystem.IsGamePlaying) return;
 
-		if (@event is InputEventMouseMotion mouseMotion)
+		if (@event is InputEventMouseMotion mouseMotion && Input.MouseMode == Input.MouseModeEnum.Captured)
 		{
 			RotateY(-mouseMotion.Relative.X * MouseSensitivity);
 			_cameraPitch = Mathf.Clamp(_cameraPitch - mouseMotion.Relative.Y * MouseSensitivity, Mathf.DegToRad(-80f), Mathf.DegToRad(80f));
@@ -107,9 +206,23 @@ public partial class Player : CharacterBody3D
 		}
 
 		if (@event.IsActionPressed("ui_cancel")) Input.MouseMode = Input.MouseModeEnum.Visible;
+
+		if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
+		{
+			if (keyEvent.Keycode == Key.F)
+			{
+				if (Input.MouseMode == Input.MouseModeEnum.Captured)
+				{
+					Input.MouseMode = Input.MouseModeEnum.Visible;
+				}
+				else
+				{
+					Input.MouseMode = Input.MouseModeEnum.Captured;
+				}
+			}
+		}
 		
-		// SPEAR THROW LOGIC WITH CRASH PROTECTION
-		if (@event.IsActionPressed("primary_fire") && _canThrow)
+		if (@event.IsActionPressed("primary_fire") && _canThrow && Input.MouseMode == Input.MouseModeEnum.Captured)
 		{
 			if (SpearContainer != null)
 			{

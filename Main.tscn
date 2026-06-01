@@ -52,11 +52,13 @@ fog_density = 0.005
 [node name="Main" type="Node3D" unique_id=605687230]
 script = ExtResource("1_20pc6")
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer")]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer", "DamageOverlayLayer", "HealthLabel")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("1_fos0i")
 SpearProjectile = ExtResource("2_lgr22")
 SpearContainer = NodePath("Head/SpearMarker")
+DamageOverlayLayer = NodePath("../DamagerOverlayManager/DamageOverlay")
+HealthLabel = NodePath("../HUD/VBoxContainer/Health Label")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=118393872]
 shape = SubResource("CapsuleShape3D_7dm0k")
@@ -90,15 +92,19 @@ KillLabel = NodePath("../HUD/VBoxContainer/KillText")
 offset_right = 125.0
 offset_bottom = 77.0
 
+[node name="Health Label" type="Label" parent="HUD/VBoxContainer" unique_id=633827655]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 2
+
+[node name="KillText" type="Label" parent="HUD/VBoxContainer" unique_id=642241075]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 2
+
 [node name="LevelText" type="Label" parent="HUD/VBoxContainer" unique_id=1258159007]
 modulate = Color(0, 0, 0, 1)
 layout_mode = 2
 
 [node name="ExpText" type="Label" parent="HUD/VBoxContainer" unique_id=1036949874]
-modulate = Color(0, 0, 0, 1)
-layout_mode = 2
-
-[node name="KillText" type="Label" parent="HUD/VBoxContainer" unique_id=642241075]
 modulate = Color(0, 0, 0, 1)
 layout_mode = 2
 
@@ -392,6 +398,21 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.974447, 3.837593, -10.763
 
 [node name="Cabin3" parent="Cabins" unique_id=218470557 instance=ExtResource("10_wkp8b")]
 transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, -18.311592, 3.7912903, 21.326992)
+
+[node name="DamagerOverlayManager" type="CanvasLayer" parent="." unique_id=878609337]
+
+[node name="DamageOverlay" type="ColorRect" parent="DamagerOverlayManager" unique_id=2093822000]
+visible = false
+modulate = Color(1, 1, 1, 0.37254903)
+self_modulate = Color(1, 1, 1, 0.37254903)
+light_mask = 128
+visibility_layer = 129
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.7181006, 1.4679879e-06, 6.738305e-07, 1)
 
 [connection signal="pressed" from="ArcadeUI/MainMenu/StartGameButton" to="ArcadeUI" method="_on_start_menu_button_pressed"]
 [connection signal="pressed" from="ArcadeUI/DifficultyMenu/EasyModeButton" to="ArcadeUI" method="_on_easy_mode_button_pressed"]
