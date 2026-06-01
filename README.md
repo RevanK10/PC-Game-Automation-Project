@@ -51,3 +51,8 @@ The dynamic level generator relies on cloud-based structural analysis to scale e
 * **Movement:** WASD or Arrow Keys
 * **Orientation / Aiming:** Mouse Look
 * **Action (Hurl Projectile):** Left Mouse Button
+
+###Attributions
+* Knight by Dawid2K [CC-BY] via Poly Pizza
+* Cloaked Assassin by Thomas DR [CC-BY] via Poly Pizza
+* Ogre by joney_lol [CC-BY] via Poly Pizza
