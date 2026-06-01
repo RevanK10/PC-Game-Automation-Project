@@ -9,7 +9,7 @@ public partial class Player : CharacterBody3D
 	[Export] public float MaxHealth = 100.0f;
 	public float CurrentHealth { get; private set; }
 
-	[Export] public float MouseSensitivity = 0.003f;
+	[Export] public float MouseSensitivity = 0.005f;
 	[Export] public PackedScene SpearProjectile; 
 	[Export] public Node3D SpearContainer;      
 	[Export] public float CooldownTime = 0.5f;

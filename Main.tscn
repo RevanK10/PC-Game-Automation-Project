@@ -14,6 +14,9 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7dm0k"]
 
+[sub_resource type="LabelSettings" id="LabelSettings_20pc6"]
+font_size = 18
+
 [sub_resource type="BoxShape3D" id="BoxShape3D_trn2v"]
 size = Vector3(500, 2, 500)
 
@@ -84,8 +87,8 @@ KillLabel = NodePath("../HUD/VBoxContainer/KillText")
 [node name="HUD" type="CanvasLayer" parent="." unique_id=473801236]
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HUD" unique_id=1974603290]
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 125.0
+offset_bottom = 77.0
 
 [node name="LevelText" type="Label" parent="HUD/VBoxContainer" unique_id=1258159007]
 modulate = Color(0, 0, 0, 1)
@@ -98,6 +101,24 @@ layout_mode = 2
 [node name="KillText" type="Label" parent="HUD/VBoxContainer" unique_id=642241075]
 modulate = Color(0, 0, 0, 1)
 layout_mode = 2
+
+[node name="VBoxContainer(2)" type="VBoxContainer" parent="HUD" unique_id=2136956302]
+layout_direction = 2
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -187.0
+offset_bottom = 113.0
+grow_horizontal = 0
+
+[node name="Instructions" type="Label" parent="HUD/VBoxContainer(2)" unique_id=725387146]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 2
+text = "Movement - WASD
+Shooting - Left Click
+Looking - Mouse
+"
+label_settings = SubResource("LabelSettings_20pc6")
 
 [node name="ArcadeUI" type="CanvasLayer" parent="." unique_id=912225237 node_paths=PackedStringArray("MainMenuPanel", "DifficultyMenuPanel", "GameOverPanel", "ScoreDisplayLabel")]
 script = ExtResource("5_03owx")
