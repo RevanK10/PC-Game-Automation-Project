@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://dih2ibmyh8dc5" path="res://Scenes/tree.tscn" id="8_trn2v"]
 [ext_resource type="AudioStream" uid="uid://d0oxbc1qea0bk" path="res://Sounds/Forest_Ambience.mp3" id="9_03owx"]
 [ext_resource type="PackedScene" uid="uid://cduk1unmftkva" path="res://Scenes/cabin.tscn" id="10_wkp8b"]
+[ext_resource type="PackedScene" uid="uid://dv3k0ghicff0c" path="res://CrosshairUI.tscn" id="12_5vvyt"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7dm0k"]
 
@@ -52,13 +53,14 @@ fog_density = 0.005
 [node name="Main" type="Node3D" unique_id=605687230]
 script = ExtResource("1_20pc6")
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer", "DamageOverlayLayer", "HealthLabel")]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer", "DamageOverlayLayer", "HealthLabel", "StaminaBar")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("1_fos0i")
 SpearProjectile = ExtResource("2_lgr22")
 SpearContainer = NodePath("Head/SpearMarker")
 DamageOverlayLayer = NodePath("../DamagerOverlayManager/DamageOverlay")
 HealthLabel = NodePath("../HUD/VBoxContainer/Health Label")
+StaminaBar = NodePath("../HUD/VBoxContainer/StaminaBar")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=118393872]
 shape = SubResource("CapsuleShape3D_7dm0k")
@@ -96,6 +98,11 @@ offset_bottom = 77.0
 modulate = Color(0, 0, 0, 1)
 layout_mode = 2
 
+[node name="StaminaBar" type="ProgressBar" parent="HUD/VBoxContainer" unique_id=725316929]
+self_modulate = Color(0, 1, 0, 1)
+layout_mode = 2
+value = 100.0
+
 [node name="KillText" type="Label" parent="HUD/VBoxContainer" unique_id=642241075]
 modulate = Color(0, 0, 0, 1)
 layout_mode = 2
@@ -108,21 +115,17 @@ layout_mode = 2
 modulate = Color(0, 0, 0, 1)
 layout_mode = 2
 
-[node name="VBoxContainer(2)" type="VBoxContainer" parent="HUD" unique_id=2136956302]
+[node name="VBoxContainer(2)" type="VBoxContainer" parent="HUD/VBoxContainer" unique_id=2136956302]
 layout_direction = 2
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -187.0
-offset_bottom = 113.0
-grow_horizontal = 0
+layout_mode = 2
 
-[node name="Instructions" type="Label" parent="HUD/VBoxContainer(2)" unique_id=725387146]
+[node name="Instructions" type="Label" parent="HUD/VBoxContainer/VBoxContainer(2)" unique_id=725387146]
 modulate = Color(0, 0, 0, 1)
 layout_mode = 2
 text = "Movement - WASD
 Shooting - Left Click
 Looking - Mouse
+Run - Shift + WASD
 "
 label_settings = SubResource("LabelSettings_20pc6")
 
@@ -413,6 +416,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.7181006, 1.4679879e-06, 6.738305e-07, 1)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=342844464]
+
+[node name="CrosshairUI" parent="CanvasLayer" unique_id=407272680 instance=ExtResource("12_5vvyt")]
 
 [connection signal="pressed" from="ArcadeUI/MainMenu/StartGameButton" to="ArcadeUI" method="_on_start_menu_button_pressed"]
 [connection signal="pressed" from="ArcadeUI/DifficultyMenu/EasyModeButton" to="ArcadeUI" method="_on_easy_mode_button_pressed"]

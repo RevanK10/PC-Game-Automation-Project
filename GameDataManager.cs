@@ -75,23 +75,23 @@ public partial class GameDataManager : Node
 		if (difficultySetting == "Easy")
 		{
 			difficultyDirectives = "Generate an introductory layout. Include exactly 3 enemies in total (one of each type). " +
-								   "For 'Robber', set speed around 3.5, health to 60. " +
-								   "For 'Soldier', set speed around 2.5, health to 90. " +
-								   "For 'Demon', set speed around 1.5, health to 120. Set exp_reward high (30-50).";
+								   "For 'Robber', set speed around 6, health to 60. " +
+								   "For 'Soldier', set speed around 4, health to 90. " +
+								   "For 'Demon', set speed around 3, health to 120. Set exp_reward high (30-50).";
 		}
 		else if (difficultySetting == "Hard")
 		{
 			difficultyDirectives = "Generate an intense arcade layout. Include exactly 3 enemies in total (one of each type). " +
-								   "Scale stats aggressively! For 'Robber', push speed up to 5.5, health to 200. " +
-								   "For 'Soldier', push speed to 4.0, health to 300. " +
-								   "For 'Demon', push speed to 3.0, health to 450. Set exp_reward tightly around 10-15.";
+								   "Scale stats aggressively! For 'Robber', push speed up to 12, health to 200. " +
+								   "For 'Soldier', push speed to 10, health to 300. " +
+								   "For 'Demon', push speed to 8, health to 450. Set exp_reward tightly around 10-15.";
 		}
 		else 
 		{
 			difficultyDirectives = "Generate a standard, balanced arcade layout. Include exactly 3 enemies in total (one of each type). " +
-								   "For 'Robber', speed 4.0, health 100. " +
-								   "For 'Soldier', speed 3.0, health 180. " +
-								   "For 'Demon', speed 2.0, health 250. Keep exp_reward balanced around 20-25.";
+								   "For 'Robber', speed 10, health 100. " +
+								   "For 'Soldier', speed 8, health 180. " +
+								   "For 'Demon', speed 6, health 250. Keep exp_reward balanced around 20-25.";
 		}
 
 		string promptText = $"{difficultyDirectives} " +
@@ -159,9 +159,9 @@ public partial class GameDataManager : Node
 			IsBossLevel = false,
 			Waves = new List<EnemyData>()
 			{
-				new EnemyData() { name = "Small Brown Robber", health = 100f, speed = 4.0f, scene_path = "res://enemies/base_enemy.tscn" },
-				new EnemyData() { name = "Medium Silver Soldier", health = 180f, speed = 3.0f, scene_path = "res://enemies/base_enemy.tscn" },
-				new EnemyData() { name = "Big Red Demon", health = 250f, speed = 2.0f, scene_path = "res://enemies/base_enemy.tscn" }
+				new EnemyData() { name = "Small Brown Robber", health = 100f, speed = 8f, scene_path = "res://enemies/base_enemy.tscn" },
+				new EnemyData() { name = "Medium Silver Soldier", health = 180f, speed = 6.0f, scene_path = "res://enemies/base_enemy.tscn" },
+				new EnemyData() { name = "Big Red Demon", health = 250f, speed = 5.0f, scene_path = "res://enemies/base_enemy.tscn" }
 			}
 		};
 		GetTree().ChangeSceneToFile("res://main.tscn");

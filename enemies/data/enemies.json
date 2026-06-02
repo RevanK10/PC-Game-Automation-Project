@@ -1,0 +1,26 @@
+[
+  {
+	"name": "Big Red Demon",
+	"health": 200.0,
+	"speed": 4.0,
+	"scale_uniform": 1.0,
+	"scale_y": 1.0,
+	"scene_path": "res://enemies/BigRedDemon.tscn"
+  },
+  {
+	"name": "Medium Silver Soldier",
+	"health": 100.0,
+	"speed": 5.0,
+	"scale_uniform": 1.0,
+	"scale_y": 1.0,
+	"scene_path": "res://enemies/MediumSilverSoldier.tscn"
+  },
+  {
+	"name": "Robber",
+	"health": 100.0,
+	"speed": 5.0,
+	"scene_path": "res://enemies/SmallBrownRobberRobber.tscn",
+	"scale_uniform": 1.0,
+	"scale_y": 1.0
+  }
+]

@@ -3,16 +3,36 @@ using System;
 
 public partial class Enemy : CharacterBody3D
 {
-	// Properties set dynamically by the JSON data
 	public string EnemyName { get; set; }
 	public float Health { get; set; }
 	public float Speed { get; set; }
 
 	private Node3D _playerTarget;
+	private MeshInstance3D _meshInstance;
+	private CollisionShape3D _collisionShape;
+
+	// Optimization: Pre-generate structural shapes statically in memory.
+	// Since Jolt forces uniform scales on primitive collision shapes at runtime,
+	// we define the exact, correct dimensions right here so no scaling is needed!
+	private static readonly CapsuleShape3D DemonShape = new CapsuleShape3D { Radius = 1.1f, Height = 5.0f };
+	private static readonly CapsuleShape3D RobberShape = new CapsuleShape3D { Radius = 0.4f, Height = 1.8f };
+	private static readonly CapsuleShape3D SoldierShape = new CapsuleShape3D { Radius = 0.7f, Height = 3.0f };
+	private static readonly CapsuleShape3D DefaultShape = new CapsuleShape3D { Radius = 0.5f, Height = 2.0f };
+
+	private bool _isTouchingPlayer = false;
+	private Player _playerRef = null;
 
 	public override void _Ready()
 	{
 		_playerTarget = GetTree().Root.GetNodeOrNull<Node3D>("Main/Player");
+
+		// Hook into an Area3D child node for damage tracking
+		var damageArea = GetNodeOrNull<Area3D>("DamageArea");
+		if (damageArea != null)
+		{
+			damageArea.BodyEntered += OnDamageAreaBodyEntered;
+			damageArea.BodyExited += OnDamageAreaBodyExited;
+		}
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -37,7 +57,6 @@ public partial class Enemy : CharacterBody3D
 				LookAt(lookTarget, Vector3.Up);
 			}
 
-			// Kept the speed modifier here so they remain at a manageable pace
 			float prototypeSpeedModifier = 0.3f;
 			velocity.X = targetDirection.X * Speed * prototypeSpeedModifier;
 			velocity.Z = targetDirection.Z * Speed * prototypeSpeedModifier;
@@ -49,23 +68,12 @@ public partial class Enemy : CharacterBody3D
 		}
 
 		Velocity = velocity;
-		
-		// 1. Execute standard kinematic movement
 		MoveAndSlide();
 
-		// 2. CONTACT DAMAGE ENGINE: Parse physical wall/body contact parameters
-		for (int i = 0; i < GetSlideCollisionCount(); i++)
+		// CONTACT DAMAGE ENGINE: Highly optimized signal tracking loop
+		if (_isTouchingPlayer && _playerRef != null && IsInstanceValid(_playerRef))
 		{
-			KinematicCollision3D collision = GetSlideCollision(i);
-			Node collider = (Node)collision.GetCollider();
-
-			// If the intersecting body is the Player node, deliver damage frame-by-frame
-			if (collider is Player player)
-			{
-				// 0.2f keeps the drain steady without deleting the player in 2 frames
-				float damagePerFrame = 0.2f; 
-				player.TakeDamage(damagePerFrame);
-			}
+			_playerRef.TakeDamage(0.2f);
 		}
 	}
 
@@ -75,108 +83,166 @@ public partial class Enemy : CharacterBody3D
 		Health = data.health;
 		Speed = data.speed;
 
-		var meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
-		var collisionShape = GetNode<CollisionShape3D>("CollisionShape3D");
-		
-		// ADDED: Fetch the Label3D node child
+		_meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
+		_collisionShape = GetNode<CollisionShape3D>("CollisionShape3D");
 		var nameLabel = GetNodeOrNull<Label3D>("Label3D");
-		
+		var damageArea = GetNodeOrNull<Area3D>("DamageArea");
+
 		AddToGroup("enemies");
-		GD.Print($"[Spawned] {EnemyName} added to 'enemies' group.");
 
-		// --- UPDATED DYNAMIC ARCHETYPE VISUALS & PHYSICS ENGINE ---
 		var material = new StandardMaterial3D();
-		meshInstance.Mesh = new CapsuleMesh();
-		meshInstance.Rotation = Vector3.Zero;
+		var capsuleMesh = new CapsuleMesh();
+		
+		// Baseline dimensions
+		float radius = 0.5f;
+		float height = 2.0f;
 
-		// Establish layout scaling defaults
-		float targetScaleUniform = 1.0f;
-		float targetScaleY = 1.0f;
-
-		// Explicitly check for our exact 3 cloud-directed archetypes
 		if (EnemyName == "Big Red Demon")
 		{
-			material.AlbedoColor = new Color(0.8f, 0.1f, 0.1f); // Crimson Red
-			targetScaleUniform = 2.2f; // Extra wide/girthy
-			targetScaleY = 2.5f;       // Towering height
+			// Deep crimson base body color
+			material.AlbedoColor = new Color(0.3f, 0.02f, 0.02f);
+			material.Roughness = 0.8f;
+
+			// --- PROCEDURAL MAGMA CRACKS LAYER ---
+			var lavaNoise = new NoiseTexture2D();
+			lavaNoise.Seamless = true;
+			lavaNoise.Width = 512;
+			lavaNoise.Height = 512;
+
+			var noisePreset = new FastNoiseLite();
+			noisePreset.NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin;
+			noisePreset.Frequency = 0.04f; // Dictates how tight or dense the magma veins split
+			noisePreset.FractalOctaves = 3;
+			lavaNoise.Noise = noisePreset;
+
+			// Map the newly formed noise filter straight onto the additive Emission channel
+			material.EmissionEnabled = true;
+			material.EmissionTexture = lavaNoise;
+			material.Emission = new Color(0.8f, 0.15f, 0.0f); // Pure molten orange vein glow
+			material.EmissionEnergyMultiplier = 0.8f;
+
+			radius = 1.1f;
+			height = 5.0f;
+			
+			_collisionShape.Shape = DemonShape;
 		}
 		else if (EnemyName == "Small Brown Robber")
 		{
-			material.AlbedoColor = new Color(0.45f, 0.28f, 0.15f); // Leather Brown
-			targetScaleUniform = 0.8f; // Thin
-			targetScaleY = 0.9f;       // Short
+			// Matte dark brown cloak look
+			material.AlbedoColor = new Color(0.25f, 0.15f, 0.08f); 
+			material.Roughness = 0.95f; 
+			
+			// Silk rim light backlighting effect
+			material.RimEnabled = true;
+			material.Rim = 0.6f;
+			material.RimTint = 0.2f;
+
+			radius = 0.4f;
+			height = 1.8f;       
+			
+			_collisionShape.Shape = RobberShape;
 		}
 		else if (EnemyName == "Medium Silver Soldier")
 		{
-			material.AlbedoColor = new Color(0.75f, 0.75f, 0.8f); // Metallic Silver
-			material.Metallic = 0.8f;   // Shiny steel finish
-			material.Roughness = 0.2f;
-			targetScaleUniform = 1.4f; // Clean baseline proportions
-			targetScaleY = 1.5f;
+			// Stylized layered metal armor using a procedural gradient
+			var armorGradientTex = new GradientTexture2D { Fill = GradientTexture2D.FillEnum.Linear, Repeat = (GradientTexture2D.RepeatEnum)1 };
+			armorGradientTex.FillFrom = new Vector2(0f, 0f);
+			armorGradientTex.FillTo = new Vector2(0f, 0.2f); 
+
+			var grayRamp = new Gradient();
+			grayRamp.Offsets = new float[] { 0.0f, 0.4f, 1.0f };
+			grayRamp.Colors = new Color[] { 
+				new Color(0.7f, 0.7f, 0.75f), // Steel plate
+				new Color(0.4f, 0.4f, 0.45f), // Midtone iron
+				new Color(0.1f, 0.1f, 0.12f)  // Segment shadow
+			};
+			armorGradientTex.Gradient = grayRamp;
+
+			material.AlbedoTexture = armorGradientTex;
+			material.Metallic = 0.9f;  
+			material.Roughness = 0.2f; 
+
+			radius = 0.7f;
+			height = 3.0f;
+			
+			_collisionShape.Shape = SoldierShape;
 		}
-		else // Fallback safety layer if name mapping text drifts
+		else 
 		{
 			material.AlbedoColor = Colors.DarkGray;
-			targetScaleUniform = Mathf.Max(data.scale_uniform, 1.0f);
-			targetScaleY = Mathf.Max(data.scale_y, 1.0f);
+			_collisionShape.Shape = DefaultShape;
 		}
 
-		meshInstance.MaterialOverride = material;
+		// Re-assign the calculated dimensions to the mesh dynamically before applying scale
+		capsuleMesh.Radius = radius;
+		capsuleMesh.Height = height;
+		_meshInstance.Mesh = capsuleMesh;
+		_meshInstance.MaterialOverride = material;
+		_meshInstance.Scale = Vector3.One;
 
-		// Scale the visual Mesh based on our locked archetype values
-		meshInstance.Scale = new Vector3(targetScaleUniform, targetScaleY, targetScaleUniform);
+		// --- GROUND PLACEMENT ENGINE ---
+		// Shifts nodes upwards by exactly half their total height. 
+		// This keeps their feet flush with Y = 0 (the level floor surface).
+		_meshInstance.Position = new Vector3(0, height / 2.0f, 0);
+		_collisionShape.Position = new Vector3(0, height / 2.0f, 0);
 
-		// Match the physical Jolt collision shape perfectly to the custom scales
-		if (collisionShape.Shape is CapsuleShape3D standardCapsule)
+		// --- JOLT COMPLIANT AREA SCALE FIX ---
+		if (damageArea != null)
 		{
-			var uniqueCapsule = (CapsuleShape3D)standardCapsule.Duplicate();
-			
-			collisionShape.Rotation = meshInstance.Rotation;
-
-			// Base capsule properties (0.5m radius, 2.0m height) multiplied by our scaling metrics
-			uniqueCapsule.Radius = 0.5f * targetScaleUniform;
-			uniqueCapsule.Height = 2.0f * targetScaleY;
-
-			collisionShape.Shape = uniqueCapsule;
+			damageArea.Position = new Vector3(0, height / 2.0f, 0);
+			var areaCollision = damageArea.GetNodeOrNull<CollisionShape3D>("CollisionShape3D");
+			if (areaCollision != null)
+			{
+				var hitboxBox = new BoxShape3D();
+				hitboxBox.Size = new Vector3(radius * 2.4f, height * 1.1f, radius * 2.4f);
+				areaCollision.Shape = hitboxBox;
+			}
 		}
 
-		// --- UPDATED FLOATING TEXT SETTING ---
+		// --- FIXED FLOATING LABEL POSITION ---
 		if (nameLabel != null)
 		{
 			nameLabel.Text = EnemyName;
 			
-			// Dynamic Height Adjustment: Sets the text offset comfortably above the capsule's total height
-			// Base height is 2.0m * targetScaleY. We cut it in half because the origin is at the center, 
-			// then add an extra 0.5 meters of clean air padding.
-			float floatingHeightPadding = (2.0f * targetScaleY / 2.0f) + 0.5f;
+			// Because the capsule's mesh position is now centered at 'height / 2.0f', 
+			// the true top of the capsule is at 'height'. We add 0.5m of padding to float cleanly.
+			float floatingHeightPadding = height + 0.5f;
 			nameLabel.Position = new Vector3(0, floatingHeightPadding, 0);
 		}
+	}
 
-		GD.Print($"[AI Ingest Success] {EnemyName} initialized with {Health} HP, {Speed} Speed. Radius: {0.5f * targetScaleUniform}, Height: {2.0f * targetScaleY}");
+	private void OnDamageAreaBodyEntered(Node body)
+	{
+		if (body is Player player)
+		{
+			_playerRef = player;
+			_isTouchingPlayer = true;
+		}
+	}
+
+	private void OnDamageAreaBodyExited(Node body)
+	{
+		if (body is Player player)
+		{
+			_isTouchingPlayer = false;
+			_playerRef = null;
+		}
 	}
 
 	public void TakeDamage(float amount)
 	{
 		Health -= amount;
-		GD.Print($"{EnemyName} took {amount} damage! HP remaining: {Health}");
-
-		if (Health <= 0)
-		{
-			Die();
-		}
+		if (Health <= 0) Die();
 	}
 
 	private void Die()
 	{
-		GD.Print($"{EnemyName} has been destroyed.");
-
 		var playerStats = GetTree().Root.GetNodeOrNull<PlayerStats>("Main/PlayerStats");
 		if (playerStats != null)
 		{
 			int expReward = (Health > 250 || EnemyName.Contains("Demon")) ? 50 : 15;
 			playerStats.RegisterKill(expReward);
 		}
-
 		QueueFree(); 
 	}
 }

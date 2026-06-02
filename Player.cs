@@ -3,8 +3,17 @@ using System;
 
 public partial class Player : CharacterBody3D
 {
-	public const float Speed = 5.0f;
+	// --- Movement Constants ---
+	public const float NormalSpeed = 5.0f;
+	[Export] public float SprintSpeed = 8.5f; 
 	public const float JumpVelocity = 4.5f;
+
+	// --- Stamina / Sprint Timeout Variables ---
+	[Export] public float MaxStamina = 100.0f;
+	private float _currentStamina;
+	private const float StaminaDrainRate = 20.0f;     // Drains fully over 5 seconds (100 / 20 = 5s)
+	private const float StaminaRegenRate = 25.0f;     // Recharges fully over 4 seconds (100 / 25 = 4s)
+	private bool _isFatigued = false;                 // Locked out of sprinting if stamina hits 0
 
 	[Export] public float MaxHealth = 100.0f;
 	public float CurrentHealth { get; private set; }
@@ -17,8 +26,8 @@ public partial class Player : CharacterBody3D
 	[Export] public Control DamageOverlayLayer;
 	[Export] public AudioStreamPlayer DamageAudioPlayer;
 	
-	// Exported variable tracking your UI text layout container
 	[Export] public Label HealthLabel;
+	[Export] public ProgressBar StaminaBar;   // Drag your UI Progress Bar here in the Inspector!
 	
 	private Node3D _head;
 	private Camera3D _camera;
@@ -31,9 +40,12 @@ public partial class Player : CharacterBody3D
 	private float _flashDurationTimer = 0.0f;
 	private const float MaxFlashDuration = 0.15f; 
 
+	private bool _isMenuOpen = false;
+
 	public override void _Ready()
 	{
 		CurrentHealth = MaxHealth;
+		_currentStamina = MaxStamina; // Start with full stamina
 
 		_head = GetNode<Node3D>("Head");
 		_camera = GetNode<Camera3D>("Head/Camera3D");
@@ -58,14 +70,7 @@ public partial class Player : CharacterBody3D
 		};
 		// -------------------------------
 
-		if (ArcadeSaveSystem.IsGamePlaying)
-		{
-			Input.MouseMode = Input.MouseModeEnum.Captured;
-		}
-		else
-		{
-			Input.MouseMode = Input.MouseModeEnum.Visible;
-		}
+		SyncMouseVisibilityState();
 		
 		_cooldownTimer = new Timer();
 		_cooldownTimer.WaitTime = CooldownTime;
@@ -73,20 +78,21 @@ public partial class Player : CharacterBody3D
 		_cooldownTimer.Timeout += () => _canThrow = true;
 		AddChild(_cooldownTimer);
 
-		// --- DYNAMIC HEALTH UI LOOKUP ---
 		if (HealthLabel == null)
 		{
-			// Fallback 1: Absolute Tree Path
-			HealthLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/HealthLabel");
-			
-			// Fallback 2: Check Sibling Node Structures if Main is nested
-			if (HealthLabel == null)
-			{
-				HealthLabel = GetNodeOrNull<Label>("../ArcadeUI/HealthLabel");
-			}
+			HealthLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/HealthLabel") ?? 
+						  GetNodeOrNull<Label>("../ArcadeUI/HealthLabel");
+		}
+
+		// Fallback UI scene path lookup for the Stamina Progress bar element
+		if (StaminaBar == null)
+		{
+			StaminaBar = GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/ArcadeUI/StaminaBar") ??
+						 GetNodeOrNull<ProgressBar>("../ArcadeUI/StaminaBar");
 		}
 		
 		UpdateHealthUI();
+		UpdateStaminaUI();
 	}
 
 	public void TakeDamage(float amount)
@@ -98,7 +104,6 @@ public partial class Player : CharacterBody3D
 			DamageOverlayLayer = GetTree().Root.GetNodeOrNull<Control>("/root/Main/DamagerOverlayManager/DamageOverlay");
 		}
 
-		// Dynamic Lookup Fallback Guard
 		if (HealthLabel == null)
 		{
 			HealthLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/HealthLabel") ?? 
@@ -108,17 +113,14 @@ public partial class Player : CharacterBody3D
 		CurrentHealth -= amount;
 		GD.Print($"[PLAYER HEALTH] Damaged by {amount:F1}. Status: {CurrentHealth:F1}/{MaxHealth}");
 
-		// Update our screen numbers actively inside our combat calculations frame
 		UpdateHealthUI();
 
 		if (DamageOverlayLayer != null)
 		{
 			DamageOverlayLayer.Visible = true;
-			
 			Color curColor = DamageOverlayLayer.SelfModulate;
 			curColor.A = 1.0f;
 			DamageOverlayLayer.SelfModulate = curColor;
-
 			_flashDurationTimer = MaxFlashDuration; 
 		}
 		else
@@ -150,12 +152,30 @@ public partial class Player : CharacterBody3D
 		}
 	}
 
+	private void UpdateStaminaUI()
+	{
+		if (StaminaBar != null)
+		{
+			StaminaBar.Value = _currentStamina;
+			
+			// Visual cue: Tints the bar slightly red if the player is entirely burned out/fatigued
+			StaminaBar.Modulate = _isFatigued ? new Color(1.0f, 0.35f, 0.35f) : new Color(1.0f, 1.0f, 1.0f);
+		}
+		else
+		{
+			// This will yell at you in the debugger if your player can't see the bar!
+			GD.PrintErr("🚨 STAMINA LINKAGE MISSING: The player script cannot find the StaminaBar node!");
+		}
+	}
+
 	private void GameOver()
 	{
 		GD.Print("💀 GAME OVER! Recording arcade statistics...");
 		
 		ArcadeSaveSystem.IsGamePlaying = false;
 		ArcadeSaveSystem.IsGameOver = true;
+
+		Input.MouseMode = Input.MouseModeEnum.Visible;
 
 		var playerStats = GetTree().Root.GetNodeOrNull<PlayerStats>("Main/PlayerStats");
 		int finalScore = playerStats != null ? playerStats.TotalKills : 0; 
@@ -177,12 +197,13 @@ public partial class Player : CharacterBody3D
 
 	public override void _Process(double delta)
 	{
+		SyncMouseVisibilityState();
+
 		if (!ArcadeSaveSystem.IsGamePlaying || DamageOverlayLayer == null || !DamageOverlayLayer.Visible) return;
 
 		if (_flashDurationTimer > 0.0f)
 		{
 			_flashDurationTimer -= (float)delta;
-			
 			Color curColor = DamageOverlayLayer.SelfModulate;
 			curColor.A = Mathf.Max(_flashDurationTimer / MaxFlashDuration, 0.0f);
 			DamageOverlayLayer.SelfModulate = curColor;
@@ -194,32 +215,58 @@ public partial class Player : CharacterBody3D
 		}
 	}
 
+	private void SyncMouseVisibilityState()
+	{
+		if (_isMenuOpen)
+		{
+			if (Input.MouseMode != Input.MouseModeEnum.Visible)
+			{
+				Input.MouseMode = Input.MouseModeEnum.Visible;
+			}
+			return;
+		}
+
+		if (ArcadeSaveSystem.IsGamePlaying)
+		{
+			if (Input.MouseMode != Input.MouseModeEnum.Captured && Input.MouseMode != Input.MouseModeEnum.ConfinedHidden)
+			{
+				Input.MouseMode = Input.MouseModeEnum.Captured;
+			}
+		}
+		else
+		{
+			if (Input.MouseMode != Input.MouseModeEnum.Visible)
+			{
+				Input.MouseMode = Input.MouseModeEnum.Visible;
+			}
+		}
+	}
+
 	public override void _Input(InputEvent @event)
 	{
-		if (!ArcadeSaveSystem.IsGamePlaying) return;
+		if (@event.IsActionPressed("ui_cancel"))
+		{
+			_isMenuOpen = !_isMenuOpen;
+			GetViewport().SetInputAsHandled(); 
+			return;
+		}
+
+		if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
+		{
+			if (keyEvent.Keycode == Key.F)
+			{
+				_isMenuOpen = !_isMenuOpen;
+				return;
+			}
+		}
+
+		if (_isMenuOpen || !ArcadeSaveSystem.IsGamePlaying) return;
 
 		if (@event is InputEventMouseMotion mouseMotion && Input.MouseMode == Input.MouseModeEnum.Captured)
 		{
 			RotateY(-mouseMotion.Relative.X * MouseSensitivity);
 			_cameraPitch = Mathf.Clamp(_cameraPitch - mouseMotion.Relative.Y * MouseSensitivity, Mathf.DegToRad(-80f), Mathf.DegToRad(80f));
 			_head.Rotation = new Vector3(_cameraPitch, 0, 0);
-		}
-
-		if (@event.IsActionPressed("ui_cancel")) Input.MouseMode = Input.MouseModeEnum.Visible;
-
-		if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
-		{
-			if (keyEvent.Keycode == Key.F)
-			{
-				if (Input.MouseMode == Input.MouseModeEnum.Captured)
-				{
-					Input.MouseMode = Input.MouseModeEnum.Visible;
-				}
-				else
-				{
-					Input.MouseMode = Input.MouseModeEnum.Captured;
-				}
-			}
 		}
 		
 		if (@event.IsActionPressed("primary_fire") && _canThrow && Input.MouseMode == Input.MouseModeEnum.Captured)
@@ -250,6 +297,32 @@ public partial class Player : CharacterBody3D
 		}
 	}
 
+	private Vector3 GetCrosshairWorldPosition()
+	{
+		if (_camera == null) return GlobalPosition - Transform.Basis.Z * 20.0f;
+
+		Vector2 screenSize = GetViewport().GetVisibleRect().Size;
+		Vector2 screenCenter = screenSize / 2.0f;
+
+		var spaceState = GetWorld3D().DirectSpaceState;
+
+		Vector3 rayOrigin = _camera.ProjectRayOrigin(screenCenter);
+		Vector3 rayNormal = _camera.ProjectRayNormal(screenCenter);
+		Vector3 rayEnd = rayOrigin + (rayNormal * 200.0f);
+
+		var query = PhysicsRayQueryParameters3D.Create(rayOrigin, rayEnd);
+		query.Exclude = new Godot.Collections.Array<Rid> { GetRid() };
+
+		var result = spaceState.IntersectRay(query);
+
+		if (result.Count > 0)
+		{
+			return (Vector3)result["position"];
+		}
+
+		return rayEnd;
+	}
+
 	private void ThrowSpear()
 	{
 		if (SpearProjectile == null)
@@ -274,13 +347,16 @@ public partial class Player : CharacterBody3D
 			spear.GlobalTransform = _camera.GlobalTransform;
 		}
 		
-		Vector3 throwDir = -_camera.GlobalTransform.Basis.Z;
+		Vector3 lookTargetPoint = GetCrosshairWorldPosition();
+		Vector3 throwDir = (lookTargetPoint - spear.GlobalPosition).Normalized();
+
+		spear.LookAt(spear.GlobalPosition + throwDir, Vector3.Up);
 		spear.Launch(throwDir, 30.0f);
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
-		if (!ArcadeSaveSystem.IsGamePlaying) return;
+		if (!ArcadeSaveSystem.IsGamePlaying || _isMenuOpen) return;
 
 		Vector3 velocity = Velocity;
 		if (!IsOnFloor()) velocity += GetGravity() * (float)delta;
@@ -288,15 +364,45 @@ public partial class Player : CharacterBody3D
 		Vector2 inputDir = Input.GetVector("ui_left", "ui_right", "ui_up", "ui_down");
 		Vector3 direction = (Transform.Basis * new Vector3(inputDir.X, 0, inputDir.Y)).Normalized();
 		
-		if (direction != Vector3.Zero)
+		bool isMoving = direction != Vector3.Zero;
+		bool wantsToSprint = Input.IsActionPressed("ui_sprint");
+
+		// Player can only sprint if they are moving, pressing down the action key, and not exhausted
+		bool isSprinting = wantsToSprint && isMoving && !_isFatigued;
+
+		if (isSprinting)
 		{
-			velocity.X = direction.X * Speed;
-			velocity.Z = direction.Z * Speed;
+			_currentStamina -= StaminaDrainRate * (float)delta;
+			if (_currentStamina <= 0.0f)
+			{
+				_currentStamina = 0.0f;
+				_isFatigued = true; // Trigger fatigue lock out
+			}
 		}
 		else
 		{
-			velocity.X = Mathf.MoveToward(Velocity.X, 0, Speed);
-			velocity.Z = Mathf.MoveToward(Velocity.Z, 0, Speed);
+			_currentStamina += StaminaRegenRate * (float)delta;
+			if (_currentStamina >= MaxStamina)
+			{
+				_currentStamina = MaxStamina;
+				_isFatigued = false; // Fully recovered, lift lock out state
+			}
+		}
+
+		// Push modifications directly to the UI bar container
+		UpdateStaminaUI();
+
+		float currentSpeed = isSprinting ? SprintSpeed : NormalSpeed;
+
+		if (isMoving)
+		{
+			velocity.X = direction.X * currentSpeed;
+			velocity.Z = direction.Z * currentSpeed;
+		}
+		else
+		{
+			velocity.X = Mathf.MoveToward(Velocity.X, 0, currentSpeed);
+			velocity.Z = Mathf.MoveToward(Velocity.Z, 0, currentSpeed);
 		}
 		Velocity = velocity;
 		MoveAndSlide();
