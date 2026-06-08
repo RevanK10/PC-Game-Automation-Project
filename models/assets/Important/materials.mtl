@@ -1,0 +1,6 @@
+# Made in Blockbench 5.1.4
+newmtl m_40805039-d458-0e21-8ac2-b84dc9ee5605
+map_Kd SpearHandleTexture.png
+newmtl m_e64dd080-ac95-436b-6a7d-acfbfcc9f265
+map_Kd SpearTipTexture.png
+newmtl none

@@ -53,7 +53,7 @@ fog_density = 0.005
 [node name="Main" type="Node3D" unique_id=605687230]
 script = ExtResource("1_20pc6")
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer", "DamageOverlayLayer", "HealthLabel", "StaminaBar")]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer", "DamageOverlayLayer", "HealthLabel", "StaminaBar", "ActiveSpearLabel")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("1_fos0i")
 SpearProjectile = ExtResource("2_lgr22")
@@ -61,6 +61,7 @@ SpearContainer = NodePath("Head/SpearMarker")
 DamageOverlayLayer = NodePath("../DamagerOverlayManager/DamageOverlay")
 HealthLabel = NodePath("../HUD/VBoxContainer/Health Label")
 StaminaBar = NodePath("../HUD/VBoxContainer/StaminaBar")
+ActiveSpearLabel = NodePath("../HUD/VBoxContainer/ActiveSpearLabel")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player" unique_id=118393872]
 shape = SubResource("CapsuleShape3D_7dm0k")
@@ -90,9 +91,30 @@ KillLabel = NodePath("../HUD/VBoxContainer/KillText")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=473801236]
 
+[node name="VBoxContainer(2)" type="VBoxContainer" parent="HUD" unique_id=2136956302]
+layout_direction = 2
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -172.0
+offset_bottom = 142.0
+grow_horizontal = 0
+
+[node name="Instructions" type="Label" parent="HUD/VBoxContainer(2)" unique_id=725387146]
+modulate = Color(0, 0, 0, 1)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Movement - WASD
+Shooting - Left Click
+Looking - Mouse
+Run - Shift + WASD
+"
+label_settings = SubResource("LabelSettings_20pc6")
+horizontal_alignment = 2
+
 [node name="VBoxContainer" type="VBoxContainer" parent="HUD" unique_id=1974603290]
 offset_right = 125.0
-offset_bottom = 77.0
+offset_bottom = 135.0
 
 [node name="Health Label" type="Label" parent="HUD/VBoxContainer" unique_id=633827655]
 modulate = Color(0, 0, 0, 1)
@@ -115,19 +137,8 @@ layout_mode = 2
 modulate = Color(0, 0, 0, 1)
 layout_mode = 2
 
-[node name="VBoxContainer(2)" type="VBoxContainer" parent="HUD/VBoxContainer" unique_id=2136956302]
-layout_direction = 2
+[node name="ActiveSpearLabel" type="Label" parent="HUD/VBoxContainer" unique_id=1123665040]
 layout_mode = 2
-
-[node name="Instructions" type="Label" parent="HUD/VBoxContainer/VBoxContainer(2)" unique_id=725387146]
-modulate = Color(0, 0, 0, 1)
-layout_mode = 2
-text = "Movement - WASD
-Shooting - Left Click
-Looking - Mouse
-Run - Shift + WASD
-"
-label_settings = SubResource("LabelSettings_20pc6")
 
 [node name="ArcadeUI" type="CanvasLayer" parent="." unique_id=912225237 node_paths=PackedStringArray("MainMenuPanel", "DifficultyMenuPanel", "GameOverPanel", "ScoreDisplayLabel")]
 script = ExtResource("5_03owx")

@@ -27,7 +27,8 @@ public partial class Player : CharacterBody3D
 	[Export] public AudioStreamPlayer DamageAudioPlayer;
 	
 	[Export] public Label HealthLabel;
-	[Export] public ProgressBar StaminaBar;   // Drag your UI Progress Bar here in the Inspector!
+	[Export] public ProgressBar StaminaBar;
+	[Export] public Label ActiveSpearLabel;
 	
 	private Node3D _head;
 	private Camera3D _camera;
@@ -90,7 +91,8 @@ public partial class Player : CharacterBody3D
 			StaminaBar = GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/ArcadeUI/StaminaBar") ??
 						 GetNodeOrNull<ProgressBar>("../ArcadeUI/StaminaBar");
 		}
-		
+		ArcadeSaveSystem.SelectedSpear = SpearType.None;
+		UpdateWeaponUI();
 		UpdateHealthUI();
 		UpdateStaminaUI();
 	}
@@ -262,6 +264,31 @@ public partial class Player : CharacterBody3D
 
 		if (_isMenuOpen || !ArcadeSaveSystem.IsGamePlaying) return;
 
+		if (@event.IsActionPressed("equip_slot_1"))
+		{
+			ArcadeSaveSystem.SelectedSpear = SpearType.None;
+			UpdateWeaponUI();
+			GD.Print("🎯 Equipped: Standard Base Spear");
+		}
+		else if (@event.IsActionPressed("equip_slot_2"))
+		{
+			ArcadeSaveSystem.SelectedSpear = SpearType.Lightning;
+			UpdateWeaponUI();
+			GD.Print("⚡ Equipped: Lightning Speed Modifier");
+		}
+		else if (@event.IsActionPressed("equip_slot_3"))
+		{
+			ArcadeSaveSystem.SelectedSpear = SpearType.Gravity;
+			UpdateWeaponUI();
+			GD.Print("🌌 Equipped: Gravitational Field Modifier");
+		}
+		else if (@event.IsActionPressed("equip_slot_4"))
+		{
+			ArcadeSaveSystem.SelectedSpear = SpearType.Explosive;
+			UpdateWeaponUI();
+			GD.Print("💥 Equipped: Heavy Payload Detonator");
+		}
+
 		if (@event is InputEventMouseMotion mouseMotion && Input.MouseMode == Input.MouseModeEnum.Captured)
 		{
 			RotateY(-mouseMotion.Relative.X * MouseSensitivity);
@@ -335,6 +362,11 @@ public partial class Player : CharacterBody3D
 		_cooldownTimer.Start();
 
 		var spear = SpearProjectile.Instantiate<SpearProjectile>();
+		
+		// --- INTEGRATE CHOSEN LOADOUT TYPE ---
+		SpearType activeType = ArcadeSaveSystem.SelectedSpear;
+		spear.ProjectileType = activeType;
+
 		GetTree().Root.AddChild(spear);
 		
 		if (SpearContainer != null)
@@ -351,7 +383,36 @@ public partial class Player : CharacterBody3D
 		Vector3 throwDir = (lookTargetPoint - spear.GlobalPosition).Normalized();
 
 		spear.LookAt(spear.GlobalPosition + throwDir, Vector3.Up);
-		spear.Launch(throwDir, 30.0f);
+
+		// --- SPEED MODIFIERS BASED ON SELECTION ---
+		float launchForce = 30.0f; // Default baseline velocity
+
+		if (activeType != SpearType.None)
+		{
+			spear.SetSpecialGlow(true);
+
+			if (activeType == SpearType.Lightning)
+			{
+				launchForce = 60.0f; // Lightning fast projectile speed parameter
+				GD.Print("⚡ Launched lightning fast spear!");
+			}
+			else if (activeType == SpearType.Gravity)
+			{
+				launchForce = 18.0f; // Heavy gravity spear drops/travels slower
+				GD.Print("🌌 Launched heavy gravitational spear!");
+			}
+			else if (activeType == SpearType.Explosive)
+			{
+				launchForce = 35.0f; // Standard weight explosive delivery
+				GD.Print("💥 Launched payload projectile spear!");
+			}
+		}
+		else
+		{
+			spear.SetSpecialGlow(false);
+		}
+
+		spear.Launch(throwDir, launchForce);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -406,5 +467,33 @@ public partial class Player : CharacterBody3D
 		}
 		Velocity = velocity;
 		MoveAndSlide();
+	}
+	
+	private void UpdateWeaponUI()
+	{
+		if (ActiveSpearLabel != null)
+		{
+			switch (ArcadeSaveSystem.SelectedSpear)
+			{
+				case SpearType.None:
+					ActiveSpearLabel.Text = "SPEAR: Standard Wood";
+					break;
+				case SpearType.Lightning:
+					ActiveSpearLabel.Text = "SPEAR: ⚡ Lightning Bolt";
+					break;
+				case SpearType.Gravity:
+					ActiveSpearLabel.Text = "SPEAR: 🌌 Gravity Core";
+					break;
+				case SpearType.Explosive:
+					ActiveSpearLabel.Text = "SPEAR: 💥 High Explosive";
+					break;
+			}
+		}
+		else
+		{
+			// Try a fallback scene-tree search if the Inspector reference isn't hooked up yet
+			ActiveSpearLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/ActiveSpearLabel") ??
+							   GetNodeOrNull<Label>("../ArcadeUI/ActiveSpearLabel");
+		}
 	}
 }

@@ -1,9 +1,13 @@
 using Godot;
+using System;
 
 public partial class SpearProjectile : RigidBody3D
 {
 	private bool _stuck = false;
 	[Export] public float Lifetime = 15.0f;
+
+	// --- LOADOUT PROPERTIES ---
+	public SpearType ProjectileType { get; set; } = SpearType.None;
 
 	public override void _Ready()
 	{
@@ -21,6 +25,68 @@ public partial class SpearProjectile : RigidBody3D
 		ApplyCentralImpulse(direction * force);
 	}
 
+	// Helper method expected by the menu transition hooks
+	public void SetSpecialGlow(bool active)
+	{
+		// 1. FIXED: If it's a standard spear, exit instantly!
+		// This leaves your imported .obj and 2 .png textures completely alone.
+		if (ProjectileType == SpearType.None)
+		{
+			return;
+		}
+
+		// 2. Otherwise, find the mesh to apply the arcade special tint effects
+		var mesh = GetNodeOrNull<MeshInstance3D>("MeshInstance3D") ?? 
+				   GetNodeOrNull<MeshInstance3D>("SpearMesh");
+
+		if (mesh == null) return;
+
+		StandardMaterial3D mat = mesh.MaterialOverride as StandardMaterial3D;
+		
+		// Safe texture-tint fallback for special variants using the base mesh surfaces
+		if (mat == null && mesh.Mesh != null)
+		{
+			var surfaceMat = mesh.Mesh.SurfaceGetMaterial(0) as StandardMaterial3D;
+			if (surfaceMat != null)
+			{
+				mat = (StandardMaterial3D)surfaceMat.Duplicate();
+				mesh.MaterialOverride = mat;
+			}
+		}
+		else if (mat != null)
+		{
+			mat = (StandardMaterial3D)mat.Duplicate();
+			mesh.MaterialOverride = mat;
+		}
+
+		if (mat == null) return;
+
+		// Apply the arcade glowing properties onto the special variations
+		if (active)
+		{
+			mat.EmissionEnabled = true;
+			mat.EmissionEnergyMultiplier = 3.0f;
+
+			switch (ProjectileType)
+			{
+				case SpearType.Lightning:
+					mat.AlbedoColor = new Color(0.4f, 0.8f, 1.0f); // Translucent blue tint
+					mat.Emission = new Color(0.0f, 0.6f, 1.0f);
+					break;
+
+				case SpearType.Gravity:
+					mat.AlbedoColor = new Color(0.7f, 0.2f, 1.0f); // Purple tint
+					mat.Emission = new Color(0.4f, 0.0f, 0.8f);
+					break;
+
+				case SpearType.Explosive:
+					mat.AlbedoColor = new Color(1.0f, 0.4f, 0.2f); // Orange/Red tint
+					mat.Emission = new Color(1.0f, 0.2f, 0.0f);
+					break;
+			}
+		}
+	}
+
 	private void OnBodyEntered(Node body)
 	{
 		if (body is Player) return;
@@ -31,44 +97,49 @@ public partial class SpearProjectile : RigidBody3D
 			Freeze = true; 
 			SetDeferred("contact_monitor", false);
 
-			// --- UPGRADED: SPEAR AUDIO TRIGGER ENGINE ---
-			// Locate our sound component and play it immediately on contact
 			var impactSound = GetNodeOrNull<AudioStreamPlayer3D>("ImpactAudio");
-			if (impactSound != null)
-			{
-				impactSound.Play();
-			}
+			if (impactSound != null) impactSound.Play();
 
-			// Check if the entity we ran into belongs to our dynamic enemy group
-			if (body.IsInGroup("enemies"))
+			// --- DETECT ARCADE MODIFIER MECHANICS ---
+			if (ProjectileType == SpearType.Explosive)
 			{
-				// Deal damage immediately
-				if (body is Enemy enemy)
+				TriggerExplosionEffect();
+			}
+			else if (body.IsInGroup("enemies") && body is Enemy enemy)
+			{
+				if (ProjectileType == SpearType.Lightning)
 				{
+					TriggerLightningStun(enemy);
+				}
+				else if (ProjectileType == SpearType.Gravity)
+				{
+					TriggerGravityVortex();
+				}
+				else
+				{
+					// Default normal spear damage
 					enemy.TakeDamage(25.0f);
 				}
 
-				// Defer the parent switch so the physics engine doesn't panic
 				CallDeferred(MethodName.StickToTarget, body);
+			}
+			else if (ProjectileType == SpearType.Gravity)
+			{
+				// If gravity spear hits the floor or wall instead of an enemy, still pull them in!
+				TriggerGravityVortex();
 			}
 		}
 	}
 
 	private void StickToTarget(Node3D targetBody)
 	{
-		// Safety check to ensure the enemy hasn't already been destroyed by the damage above
 		if (!IsInstanceValid(targetBody)) return;
 
-		// 1. Capture exactly where the spear is in global 3D space right now
 		Vector3 currentGlobalPosition = GlobalPosition;
 		Basis currentGlobalBasis = GlobalBasis;
 
-		// 2. Shut off any visual/physics loops on this spear node so it behaves strictly as a cosmetic attachment
-		// NOTE: ProcessModeEnum.Disabled is perfectly fine here! The AudioStreamPlayer3D will finish 
-		// playing its sound because it was already triggered and started running on the native audio thread.
 		ProcessMode = ProcessModeEnum.Disabled;
 
-		// Disable the spear's collision shapes so it doesn't bump into other flying objects
 		foreach (Node child in GetChildren())
 		{
 			if (child is CollisionShape3D collisionShape)
@@ -77,16 +148,89 @@ public partial class SpearProjectile : RigidBody3D
 			}
 		}
 
-		// 3. Unhook from the map floor, and attach directly onto the enemy structure
 		if (GetParent() != null)
 		{
 			GetParent().RemoveChild(this);
 		}
 		targetBody.AddChild(this);
 
-		// 4. Force the spear back to its exact impact point. Godot will automatically recalculate
-		// these values relative to the moving enemy parent node!
 		GlobalPosition = currentGlobalPosition;
 		GlobalBasis = currentGlobalBasis;
+	}
+	
+	// ⚡ 1. LIGHTNING STUN MECHANIC
+	private void TriggerLightningStun(Enemy enemy)
+	{
+		enemy.TakeDamage(15.0f); // Light impact damage
+		
+		// Temporal speed freeze override
+		float originalSpeed = enemy.Speed;
+		enemy.Speed = 0.0f; 
+		GD.Print($"⚡ {enemy.EnemyName} is electrocuted and paralyzed!");
+
+		// Release from stun after 3 full seconds
+		GetTree().CreateTimer(3.0f).Timeout += () =>
+		{
+			if (IsInstanceValid(enemy))
+			{
+				enemy.Speed = originalSpeed;
+				GD.Print($"⚡ {enemy.EnemyName} recovered from electrocution.");
+			}
+		};
+	}
+
+	// 🌌 2. GRAVITY VORTEX PULL MECHANIC
+	private void TriggerGravityVortex()
+	{
+		float pullRadius = 12.0f;
+		float pullForce = 22.0f;
+		
+		GD.Print("🌌 Gravity singularity activated! Pulling enemies...");
+
+		var enemies = GetTree().GetNodesInGroup("enemies");
+		foreach (Node node in enemies)
+		{
+			if (node is Enemy enemy && IsInstanceValid(enemy))
+			{
+				float distance = GlobalPosition.DistanceTo(enemy.GlobalPosition);
+				if (distance <= pullRadius)
+				{
+					Vector3 pullDirection = (GlobalPosition - enemy.GlobalPosition).Normalized();
+					Vector3 appliedForce = pullDirection * pullForce;
+					enemy.ApplyExternalForce(appliedForce, 0.6f);
+				}
+			}
+		}
+	}
+
+	// 💥 3. HIGH EXPLOSIVE AOE MECHANIC
+	private void TriggerExplosionEffect()
+	{
+		float blastRadius = 8.0f;
+		float maxBlastDamage = 75.0f;
+
+		GD.Print("💥 BOOM! Detonating payload...");
+
+		var enemies = GetTree().GetNodesInGroup("enemies");
+		foreach (Node node in enemies)
+		{
+			if (node is Enemy enemy && IsInstanceValid(enemy))
+			{
+				float distance = GlobalPosition.DistanceTo(enemy.GlobalPosition);
+				if (distance <= blastRadius)
+				{
+					float falloffFactor = 1.0f - (distance / blastRadius);
+					float finalCalculatedDamage = maxBlastDamage * falloffFactor;
+
+					enemy.TakeDamage(Mathf.Max(finalCalculatedDamage, 15.0f));
+
+					Vector3 knockbackDir = (enemy.GlobalPosition - GlobalPosition).Normalized();
+					knockbackDir.Y = 0.2f; 
+					enemy.ApplyExternalForce(knockbackDir * 25.0f, 0.4f);
+				}
+			}
+		}
+
+		QueueFree();
 	}
 }

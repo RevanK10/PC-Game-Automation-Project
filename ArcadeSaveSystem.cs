@@ -1,10 +1,22 @@
 using Godot;
 using System;
 
+// --- THE STRUCTURAL FIX: GLOBAL ENUM DECLARATION ---
+public enum SpearType
+{
+	None,
+	Lightning,
+	Gravity,
+	Explosive
+}
+
 public static class ArcadeSaveSystem
 {
 	private static int _highestScore = 0;
 	private const string SaveFilePath = "user://highscore.save";
+
+	// Tracks which modification type was selected in the main menu
+	public static SpearType SelectedSpear { get; set; } = SpearType.None;
 
 	// UPGRADED: HighestScore now automatically checks the local disk and auto-saves records
 	public static int HighestScore 

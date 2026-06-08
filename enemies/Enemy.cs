@@ -7,6 +7,10 @@ public partial class Enemy : CharacterBody3D
 	public float Health { get; set; }
 	public float Speed { get; set; }
 
+	// --- ARCADE MODIFIER STATE TRACKERS ---
+	private float _knockbackTimer = 0.0f;
+	private Vector3 _externalVelocity = Vector3.Zero;
+
 	private Node3D _playerTarget;
 	private MeshInstance3D _meshInstance;
 	private CollisionShape3D _collisionShape;
@@ -39,12 +43,36 @@ public partial class Enemy : CharacterBody3D
 	{
 		Vector3 velocity = Velocity;
 
+		// 1. Handle standard map gravity gravity calculations
 		if (!IsOnFloor())
 		{
 			velocity += GetGravity() * (float)delta;
 		}
 
-		if (_playerTarget != null && IsInstanceValid(_playerTarget))
+		// 2. Handle External Force Interrupts (Explosions, Gravity pulls, etc.)
+		if (_knockbackTimer > 0.0f)
+		{
+			_knockbackTimer -= (float)delta;
+			
+			// Inject the explosive payload force or gravity vector smoothly 
+			velocity.X = _externalVelocity.X;
+			velocity.Z = _externalVelocity.Z;
+
+			// If the force was an explosion knockback pushing upwards, apply the Y velocity
+			if (_externalVelocity.Y != 0)
+			{
+				velocity.Y = _externalVelocity.Y;
+				_externalVelocity.Y = 0; // Handed off to gravity loop for tracking the fallout arc
+			}
+
+			// Clean up velocity stack once the physics window times out
+			if (_knockbackTimer <= 0.0f)
+			{
+				_externalVelocity = Vector3.Zero;
+			}
+		}
+		// 3. Normal Pathfinding Logic (Only tracking if not stunned/immobilized by lightning)
+		else if (_playerTarget != null && IsInstanceValid(_playerTarget) && Speed > 0.0f)
 		{
 			Vector3 playerPosition = _playerTarget.GlobalPosition;
 			Vector3 targetDirection = playerPosition - GlobalPosition;
@@ -63,8 +91,9 @@ public partial class Enemy : CharacterBody3D
 		}
 		else
 		{
-			velocity.X = Mathf.MoveToward(Velocity.X, 0, Speed);
-			velocity.Z = Mathf.MoveToward(Velocity.Z, 0, Speed);
+			// Friction slowdown if the target is lost or completely paralyzed (Speed == 0)
+			velocity.X = Mathf.MoveToward(Velocity.X, 0, Speed > 0 ? Speed : 10.0f);
+			velocity.Z = Mathf.MoveToward(Velocity.Z, 0, Speed > 0 ? Speed : 10.0f);
 		}
 
 		Velocity = velocity;
@@ -75,6 +104,13 @@ public partial class Enemy : CharacterBody3D
 		{
 			_playerRef.TakeDamage(0.2f);
 		}
+	}
+
+	// Called by SpearProjectile to apply knockbacks and gravitational vortex updates
+	public void ApplyExternalForce(Vector3 force, float duration)
+	{
+		_knockbackTimer = duration;
+		_externalVelocity = force;
 	}
 
 	public void Initialize(EnemyData data)
@@ -99,7 +135,6 @@ public partial class Enemy : CharacterBody3D
 
 		if (EnemyName == "Big Red Demon")
 		{
-			// Deep crimson base body color
 			material.AlbedoColor = new Color(0.3f, 0.02f, 0.02f);
 			material.Roughness = 0.8f;
 
@@ -111,14 +146,13 @@ public partial class Enemy : CharacterBody3D
 
 			var noisePreset = new FastNoiseLite();
 			noisePreset.NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin;
-			noisePreset.Frequency = 0.04f; // Dictates how tight or dense the magma veins split
+			noisePreset.Frequency = 0.04f; 
 			noisePreset.FractalOctaves = 3;
 			lavaNoise.Noise = noisePreset;
 
-			// Map the newly formed noise filter straight onto the additive Emission channel
 			material.EmissionEnabled = true;
 			material.EmissionTexture = lavaNoise;
-			material.Emission = new Color(0.8f, 0.15f, 0.0f); // Pure molten orange vein glow
+			material.Emission = new Color(0.8f, 0.15f, 0.0f); 
 			material.EmissionEnergyMultiplier = 0.8f;
 
 			radius = 1.1f;
@@ -128,11 +162,9 @@ public partial class Enemy : CharacterBody3D
 		}
 		else if (EnemyName == "Small Brown Robber")
 		{
-			// Matte dark brown cloak look
 			material.AlbedoColor = new Color(0.25f, 0.15f, 0.08f); 
 			material.Roughness = 0.95f; 
 			
-			// Silk rim light backlighting effect
 			material.RimEnabled = true;
 			material.Rim = 0.6f;
 			material.RimTint = 0.2f;
@@ -144,7 +176,6 @@ public partial class Enemy : CharacterBody3D
 		}
 		else if (EnemyName == "Medium Silver Soldier")
 		{
-			// Stylized layered metal armor using a procedural gradient
 			var armorGradientTex = new GradientTexture2D { Fill = GradientTexture2D.FillEnum.Linear, Repeat = (GradientTexture2D.RepeatEnum)1 };
 			armorGradientTex.FillFrom = new Vector2(0f, 0f);
 			armorGradientTex.FillTo = new Vector2(0f, 0.2f); 
@@ -173,20 +204,15 @@ public partial class Enemy : CharacterBody3D
 			_collisionShape.Shape = DefaultShape;
 		}
 
-		// Re-assign the calculated dimensions to the mesh dynamically before applying scale
 		capsuleMesh.Radius = radius;
 		capsuleMesh.Height = height;
 		_meshInstance.Mesh = capsuleMesh;
 		_meshInstance.MaterialOverride = material;
 		_meshInstance.Scale = Vector3.One;
 
-		// --- GROUND PLACEMENT ENGINE ---
-		// Shifts nodes upwards by exactly half their total height. 
-		// This keeps their feet flush with Y = 0 (the level floor surface).
 		_meshInstance.Position = new Vector3(0, height / 2.0f, 0);
 		_collisionShape.Position = new Vector3(0, height / 2.0f, 0);
 
-		// --- JOLT COMPLIANT AREA SCALE FIX ---
 		if (damageArea != null)
 		{
 			damageArea.Position = new Vector3(0, height / 2.0f, 0);
@@ -199,13 +225,9 @@ public partial class Enemy : CharacterBody3D
 			}
 		}
 
-		// --- FIXED FLOATING LABEL POSITION ---
 		if (nameLabel != null)
 		{
 			nameLabel.Text = EnemyName;
-			
-			// Because the capsule's mesh position is now centered at 'height / 2.0f', 
-			// the true top of the capsule is at 'height'. We add 0.5m of padding to float cleanly.
 			float floatingHeightPadding = height + 0.5f;
 			nameLabel.Position = new Vector3(0, floatingHeightPadding, 0);
 		}
