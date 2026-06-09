@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://k5rrknardib8"]
 
 [ext_resource type="Script" uid="uid://cihylr3t42clr" path="res://enemies/Enemy.cs" id="1_j7qyq"]
+[ext_resource type="PackedScene" uid="uid://bmfm6pimn7hs" path="res://enemies/enemy_health_bar.tscn" id="2_bfj6p"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_f4gj5"]
 
@@ -28,3 +29,9 @@ billboard = 1
 [node name="CollisionShape3D" type="CollisionShape3D" parent="DamageArea" unique_id=1072347285]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_j7qyq")
+
+[node name="HealthBarSprite" type="Sprite3D" parent="." unique_id=386774220]
+billboard = 1
+no_depth_test = true
+
+[node name="EnemyHealthBarViewport" parent="HealthBarSprite" unique_id=1550686913 instance=ExtResource("2_bfj6p")]

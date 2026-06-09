@@ -183,21 +183,26 @@ public partial class SpearProjectile : RigidBody3D
 	private void TriggerGravityVortex()
 	{
 		float pullRadius = 12.0f;
-		float pullForce = 22.0f;
+		float pullForce = 18.0f;
 		
 		GD.Print("🌌 Gravity singularity activated! Pulling enemies...");
-
+		
+		Vector3 vortexCenter = GlobalPosition;
 		var enemies = GetTree().GetNodesInGroup("enemies");
 		foreach (Node node in enemies)
 		{
 			if (node is Enemy enemy && IsInstanceValid(enemy))
 			{
 				float distance = GlobalPosition.DistanceTo(enemy.GlobalPosition);
-				if (distance <= pullRadius)
+				if (distance <= pullRadius && distance > 0.1f)
 				{
-					Vector3 pullDirection = (GlobalPosition - enemy.GlobalPosition).Normalized();
-					Vector3 appliedForce = pullDirection * pullForce;
-					enemy.ApplyExternalForce(appliedForce, 0.6f);
+					Vector3 pullDirection = vortexCenter - enemy.GlobalPosition;
+					pullDirection.Y = 0.0f;
+					pullDirection = pullDirection.Normalized();
+					
+					float distanceScale = Mathf.Clamp(distance/pullRadius, 0.2f, 1.0f);
+					Vector3 appliedForce = pullDirection * pullForce * distanceScale;
+					enemy.ApplyExternalForce(appliedForce, 0.5f);
 				}
 			}
 		}

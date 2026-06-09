@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://bmfm6pimn7hs"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_isior"]
+bg_color = Color(0.07123137, 0.0712314, 0.07123133, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_04eva"]
+bg_color = Color(0.57925385, 1.973361e-06, 3.85046e-07, 1)
+
+[node name="EnemyHealthBarViewport" type="SubViewport" unique_id=1550686913]
+transparent_bg = true
+size = Vector2i(128, 16)
+render_target_update_mode = 4
+
+[node name="HealthBar" type="ProgressBar" parent="." unique_id=691621943]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_isior")
+theme_override_styles/fill = SubResource("StyleBoxFlat_04eva")
+show_percentage = false

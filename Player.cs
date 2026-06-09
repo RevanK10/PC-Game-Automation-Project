@@ -30,6 +30,9 @@ public partial class Player : CharacterBody3D
 	[Export] public ProgressBar StaminaBar;
 	[Export] public Label ActiveSpearLabel;
 	
+	[Export] public Control SelectorHighlight;
+	[Export] public Godot.Collections.Array<Control> HotbarSlots;
+		
 	private Node3D _head;
 	private Camera3D _camera;
 	private float _cameraPitch = 0.0f;
@@ -69,7 +72,6 @@ public partial class Player : CharacterBody3D
 			CollisionMask = originalMask;
 			Velocity = Vector3.Zero;
 		};
-		// -------------------------------
 
 		SyncMouseVisibilityState();
 		
@@ -85,16 +87,34 @@ public partial class Player : CharacterBody3D
 						  GetNodeOrNull<Label>("../ArcadeUI/HealthLabel");
 		}
 
-		// Fallback UI scene path lookup for the Stamina Progress bar element
 		if (StaminaBar == null)
 		{
 			StaminaBar = GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/ArcadeUI/StaminaBar") ??
 						 GetNodeOrNull<ProgressBar>("../ArcadeUI/StaminaBar");
 		}
+
 		ArcadeSaveSystem.SelectedSpear = SpearType.None;
-		UpdateWeaponUI();
 		UpdateHealthUI();
 		UpdateStaminaUI();
+		
+		// Initial sync check based on menu initialization state boundaries
+		ToggleHotbarVisibility(ArcadeSaveSystem.IsGamePlaying);
+	}
+	
+	public void ToggleHotbarVisibility(bool isVisible)
+	{
+		var hotbarPanel = GetNodeOrNull<Control>("../ArcadeUI/HotbarPanel") ??
+						  GetNodeOrNull<Control>("/root/Main/ArcadeUI/HotbarPanel");
+		
+		if (hotbarPanel != null)
+		{
+			hotbarPanel.Visible = isVisible;
+		}
+
+		if (isVisible)
+		{
+			Callable.From(UpdateWeaponUI).CallDeferred();
+		}
 	}
 
 	public void TakeDamage(float amount)
@@ -146,11 +166,6 @@ public partial class Player : CharacterBody3D
 		if (HealthLabel != null)
 		{
 			HealthLabel.Text = $"HP: {Mathf.Max(CurrentHealth, 0.0f):F0} / {MaxHealth:F0}";
-			GD.Print($"[UI SYNC] Updated HealthLabel text to: {HealthLabel.Text}");
-		}
-		else
-		{
-			GD.PrintErr("❌ UI LINKAGE ERROR: HealthLabel reference is null. Text cannot be set!");
 		}
 	}
 
@@ -159,21 +174,12 @@ public partial class Player : CharacterBody3D
 		if (StaminaBar != null)
 		{
 			StaminaBar.Value = _currentStamina;
-			
-			// Visual cue: Tints the bar slightly red if the player is entirely burned out/fatigued
 			StaminaBar.Modulate = _isFatigued ? new Color(1.0f, 0.35f, 0.35f) : new Color(1.0f, 1.0f, 1.0f);
-		}
-		else
-		{
-			// This will yell at you in the debugger if your player can't see the bar!
-			GD.PrintErr("🚨 STAMINA LINKAGE MISSING: The player script cannot find the StaminaBar node!");
 		}
 	}
 
 	private void GameOver()
 	{
-		GD.Print("💀 GAME OVER! Recording arcade statistics...");
-		
 		ArcadeSaveSystem.IsGamePlaying = false;
 		ArcadeSaveSystem.IsGameOver = true;
 
@@ -186,7 +192,6 @@ public partial class Player : CharacterBody3D
 		if (finalScore > ArcadeSaveSystem.HighestScore)
 		{
 			ArcadeSaveSystem.HighestScore = finalScore;
-			GD.Print($"🏆 NEW HIGH SCORE: {ArcadeSaveSystem.HighestScore}!");
 		}
 
 		if (DamageOverlayLayer != null)
@@ -194,6 +199,7 @@ public partial class Player : CharacterBody3D
 			DamageOverlayLayer.Visible = false;
 		}
 
+		ToggleHotbarVisibility(false);
 		GetTree().ReloadCurrentScene();
 	}
 
@@ -268,25 +274,21 @@ public partial class Player : CharacterBody3D
 		{
 			ArcadeSaveSystem.SelectedSpear = SpearType.None;
 			UpdateWeaponUI();
-			GD.Print("🎯 Equipped: Standard Base Spear");
 		}
 		else if (@event.IsActionPressed("equip_slot_2"))
 		{
 			ArcadeSaveSystem.SelectedSpear = SpearType.Lightning;
 			UpdateWeaponUI();
-			GD.Print("⚡ Equipped: Lightning Speed Modifier");
 		}
 		else if (@event.IsActionPressed("equip_slot_3"))
 		{
 			ArcadeSaveSystem.SelectedSpear = SpearType.Gravity;
 			UpdateWeaponUI();
-			GD.Print("🌌 Equipped: Gravitational Field Modifier");
 		}
 		else if (@event.IsActionPressed("equip_slot_4"))
 		{
 			ArcadeSaveSystem.SelectedSpear = SpearType.Explosive;
 			UpdateWeaponUI();
-			GD.Print("💥 Equipped: Heavy Payload Detonator");
 		}
 
 		if (@event is InputEventMouseMotion mouseMotion && Input.MouseMode == Input.MouseModeEnum.Captured)
@@ -304,10 +306,6 @@ public partial class Player : CharacterBody3D
 				_spearTween?.Kill();
 				_spearTween = CreateTween();
 				_spearTween.TweenProperty(SpearContainer, "position:z", -0.3f, 0.3f);
-			}
-			else
-			{
-				GD.PrintErr("❌ ERROR: SpearContainer is null! Check your Player Node Hierarchy.");
 			}
 		}
 		else if (@event.IsActionReleased("primary_fire") && _isDrawing)
@@ -352,18 +350,12 @@ public partial class Player : CharacterBody3D
 
 	private void ThrowSpear()
 	{
-		if (SpearProjectile == null)
-		{
-			GD.PrintErr("❌ ERROR: SpearProjectile PackedScene is missing in Inspector!");
-			return;
-		}
+		if (SpearProjectile == null) return;
 
 		_canThrow = false;
 		_cooldownTimer.Start();
 
 		var spear = SpearProjectile.Instantiate<SpearProjectile>();
-		
-		// --- INTEGRATE CHOSEN LOADOUT TYPE ---
 		SpearType activeType = ArcadeSaveSystem.SelectedSpear;
 		spear.ProjectileType = activeType;
 
@@ -384,8 +376,7 @@ public partial class Player : CharacterBody3D
 
 		spear.LookAt(spear.GlobalPosition + throwDir, Vector3.Up);
 
-		// --- SPEED MODIFIERS BASED ON SELECTION ---
-		float launchForce = 30.0f; // Default baseline velocity
+		float launchForce = 30.0f; 
 
 		if (activeType != SpearType.None)
 		{
@@ -393,18 +384,15 @@ public partial class Player : CharacterBody3D
 
 			if (activeType == SpearType.Lightning)
 			{
-				launchForce = 60.0f; // Lightning fast projectile speed parameter
-				GD.Print("⚡ Launched lightning fast spear!");
+				launchForce = 60.0f; 
 			}
 			else if (activeType == SpearType.Gravity)
 			{
-				launchForce = 18.0f; // Heavy gravity spear drops/travels slower
-				GD.Print("🌌 Launched heavy gravitational spear!");
+				launchForce = 18.0f; 
 			}
 			else if (activeType == SpearType.Explosive)
 			{
-				launchForce = 35.0f; // Standard weight explosive delivery
-				GD.Print("💥 Launched payload projectile spear!");
+				launchForce = 35.0f; 
 			}
 		}
 		else
@@ -428,7 +416,6 @@ public partial class Player : CharacterBody3D
 		bool isMoving = direction != Vector3.Zero;
 		bool wantsToSprint = Input.IsActionPressed("ui_sprint");
 
-		// Player can only sprint if they are moving, pressing down the action key, and not exhausted
 		bool isSprinting = wantsToSprint && isMoving && !_isFatigued;
 
 		if (isSprinting)
@@ -437,7 +424,7 @@ public partial class Player : CharacterBody3D
 			if (_currentStamina <= 0.0f)
 			{
 				_currentStamina = 0.0f;
-				_isFatigued = true; // Trigger fatigue lock out
+				_isFatigued = true; 
 			}
 		}
 		else
@@ -446,11 +433,10 @@ public partial class Player : CharacterBody3D
 			if (_currentStamina >= MaxStamina)
 			{
 				_currentStamina = MaxStamina;
-				_isFatigued = false; // Fully recovered, lift lock out state
+				_isFatigued = false; 
 			}
 		}
 
-		// Push modifications directly to the UI bar container
 		UpdateStaminaUI();
 
 		float currentSpeed = isSprinting ? SprintSpeed : NormalSpeed;
@@ -471,29 +457,31 @@ public partial class Player : CharacterBody3D
 	
 	private void UpdateWeaponUI()
 	{
-		if (ActiveSpearLabel != null)
+		if (SelectorHighlight == null || HotbarSlots == null || HotbarSlots.Count == 0)
 		{
-			switch (ArcadeSaveSystem.SelectedSpear)
-			{
-				case SpearType.None:
-					ActiveSpearLabel.Text = "SPEAR: Standard Wood";
-					break;
-				case SpearType.Lightning:
-					ActiveSpearLabel.Text = "SPEAR: ⚡ Lightning Bolt";
-					break;
-				case SpearType.Gravity:
-					ActiveSpearLabel.Text = "SPEAR: 🌌 Gravity Core";
-					break;
-				case SpearType.Explosive:
-					ActiveSpearLabel.Text = "SPEAR: 💥 High Explosive";
-					break;
-			}
+			return;
 		}
-		else
+		
+		int targetSlotIndex = 0;
+		switch (ArcadeSaveSystem.SelectedSpear)
 		{
-			// Try a fallback scene-tree search if the Inspector reference isn't hooked up yet
-			ActiveSpearLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/ActiveSpearLabel") ??
-							   GetNodeOrNull<Label>("../ArcadeUI/ActiveSpearLabel");
+			case SpearType.None: targetSlotIndex = 0; break;
+			case SpearType.Lightning: targetSlotIndex = 1; break;
+			case SpearType.Gravity: targetSlotIndex = 2; break;
+			case SpearType.Explosive: targetSlotIndex = 3; break;
+		}
+		
+		if (HotbarSlots.Count > targetSlotIndex)
+		{
+			Control targetSlot = HotbarSlots[targetSlotIndex];
+			
+			Tween uiTween = CreateTween();
+			uiTween.SetTrans(Tween.TransitionType.Cubic);
+			uiTween.SetEase(Tween.EaseType.Out);
+			uiTween.SetParallel(true);
+			
+			uiTween.TweenProperty(SelectorHighlight, "global_position", targetSlot.GlobalPosition, 0.12f);
+			uiTween.TweenProperty(SelectorHighlight, "size", targetSlot.Size, 0.12f);
 		}
 	}
 }

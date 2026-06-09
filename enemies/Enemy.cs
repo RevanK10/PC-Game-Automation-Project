@@ -25,6 +25,11 @@ public partial class Enemy : CharacterBody3D
 
 	private bool _isTouchingPlayer = false;
 	private Player _playerRef = null;
+	
+	//Health Bar Reference
+	private SubViewport _healthViewport;
+	private ProgressBar _healthBar;
+	private float _maxHealth;
 
 	public override void _Ready()
 	{
@@ -118,11 +123,15 @@ public partial class Enemy : CharacterBody3D
 		EnemyName = data.name;
 		Health = data.health;
 		Speed = data.speed;
+		_maxHealth = data.health;
+		Health = _maxHealth;
 
 		_meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
 		_collisionShape = GetNode<CollisionShape3D>("CollisionShape3D");
 		var nameLabel = GetNodeOrNull<Label3D>("Label3D");
 		var damageArea = GetNodeOrNull<Area3D>("DamageArea");
+		_healthViewport = GetNodeOrNull<SubViewport>("HealthBarSprite/EnemyHealthBarViewport");
+		var healthSprite = GetNodeOrNull<Sprite3D>("HealthBarSprite");
 
 		AddToGroup("enemies");
 
@@ -224,6 +233,19 @@ public partial class Enemy : CharacterBody3D
 				areaCollision.Shape = hitboxBox;
 			}
 		}
+		
+		if (_healthViewport != null && healthSprite != null)
+		{
+			healthSprite.Texture = _healthViewport.GetTexture();
+			_healthBar = _healthViewport.GetNodeOrNull<ProgressBar>("HealthBar");
+			if (_healthBar != null)
+			{
+				_healthBar.MaxValue = _maxHealth;
+				_healthBar.Value = Health;
+			}
+			
+			healthSprite.Position = new Vector3(0, height + 0.15f, 0);
+		}
 
 		if (nameLabel != null)
 		{
@@ -231,6 +253,8 @@ public partial class Enemy : CharacterBody3D
 			float floatingHeightPadding = height + 0.5f;
 			nameLabel.Position = new Vector3(0, floatingHeightPadding, 0);
 		}
+		
+		
 	}
 
 	private void OnDamageAreaBodyEntered(Node body)
@@ -254,6 +278,13 @@ public partial class Enemy : CharacterBody3D
 	public void TakeDamage(float amount)
 	{
 		Health -= amount;
+		
+		if (_healthBar != null)
+		{
+			_healthBar.Value = Mathf.Max(Health, 0.0f);
+		}
+		
+		GD.Print($"[{EnemyName}] took {amount} damage. Health remaining: {Health}/{_maxHealth}");
 		if (Health <= 0) Die();
 	}
 

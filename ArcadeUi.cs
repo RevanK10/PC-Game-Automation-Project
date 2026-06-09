@@ -9,14 +9,14 @@ public partial class ArcadeUi : CanvasLayer
 	[Export] public Control LoadingPanel; 
 	[Export] public Label ScoreDisplayLabel;
 	
-	// ADDED: Drag your new LineEdit node here in the Inspector
+	// Drag your LineEdit node here in the Inspector
 	[Export] public LineEdit ApiKeyInput; 
 
 	public override void _Ready()
 	{
 		HideAllPanels();
 
-		// NOW AUTOMATED: If the player already saved a key previously, auto-fill it for convenience!
+		// Auto-fill saved API key if it exists
 		if (ApiKeyInput != null && FileAccess.FileExists("user://api_key.txt"))
 		{
 			using var file = FileAccess.Open("user://api_key.txt", FileAccess.ModeFlags.Read);
@@ -49,7 +49,6 @@ public partial class ArcadeUi : CanvasLayer
 	// Connected to your StartGameButton 'pressed()' signal
 	public void _on_start_menu_button_pressed()
 	{
-		// MODIFIED: Save the text from the LineEdit to local storage right when they click "Play"
 		if (ApiKeyInput != null)
 		{
 			string enteredKey = ApiKeyInput.Text.StripEdges();
@@ -62,6 +61,16 @@ public partial class ArcadeUi : CanvasLayer
 
 		MainMenuPanel?.Hide();
 		DifficultyMenuPanel?.Show();
+		
+		// Tree-safe relative steps to find the player
+		var player = GetNodeOrNull<Player>("Player") ??
+					 GetNodeOrNull<Player>("../Player") ??
+					 GetNodeOrNull<Player>("../../Player");
+
+		if (player != null)
+		{
+			player.ToggleHotbarVisibility(true);
+		}
 	}
 
 	public void SelectDifficulty(float multiplier)
@@ -72,7 +81,11 @@ public partial class ArcadeUi : CanvasLayer
 		DifficultyMenuPanel?.Hide();
 		LoadingPanel?.Show();
 
-		var dataManager = GetTree().Root.GetNodeOrNull<GameDataManager>("Main/GameDataManager");
+		// Tree-safe relative lookup to completely avoid native scene tree errors
+		var dataManager = GetNodeOrNull<GameDataManager>("../GameDataManager") ??
+						  GetNodeOrNull<GameDataManager>("../../GameDataManager") ??
+						  GetTree().Root.GetNodeOrNull<GameDataManager>("Main/GameDataManager");
+
 		if (dataManager != null)
 		{
 			string settingName = "Medium";
@@ -83,6 +96,7 @@ public partial class ArcadeUi : CanvasLayer
 		}
 		else
 		{
+			GD.PrintErr("⚠️ SYSTEM NOTICE: GameDataManager node not found relative to ArcadeUI! Reloading fallback arena.");
 			GetTree().ReloadCurrentScene();
 		}
 	}
