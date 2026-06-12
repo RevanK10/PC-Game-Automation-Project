@@ -30,6 +30,10 @@ public partial class Enemy : CharacterBody3D
 	private SubViewport _healthViewport;
 	private ProgressBar _healthBar;
 	private float _maxHealth;
+	
+	// --- LIGHTNING COUNTERMEASURE BUG FIX STATE STORAGE ---
+	private SceneTreeTimer _activeStunTimer = null;
+	private float _baseSpeed = 0.0f;
 
 	public override void _Ready()
 	{
@@ -48,7 +52,7 @@ public partial class Enemy : CharacterBody3D
 	{
 		Vector3 velocity = Velocity;
 
-		// 1. Handle standard map gravity gravity calculations
+		// 1. Handle standard map gravity calculations
 		if (!IsOnFloor())
 		{
 			velocity += GetGravity() * (float)delta;
@@ -76,8 +80,8 @@ public partial class Enemy : CharacterBody3D
 				_externalVelocity = Vector3.Zero;
 			}
 		}
-		// 3. Normal Pathfinding Logic (Only tracking if not stunned/immobilized by lightning)
-		else if (_playerTarget != null && IsInstanceValid(_playerTarget) && Speed > 0.0f)
+		// 3. Normal Pathfinding Logic (Only tracking if player exists, and enemy is NOT stunned/frozen by lightning)
+		else if (_playerTarget != null && IsInstanceValid(_playerTarget) && Speed > 0.0f && _activeStunTimer == null)
 		{
 			Vector3 playerPosition = _playerTarget.GlobalPosition;
 			Vector3 targetDirection = playerPosition - GlobalPosition;
@@ -96,7 +100,7 @@ public partial class Enemy : CharacterBody3D
 		}
 		else
 		{
-			// Friction slowdown if the target is lost or completely paralyzed (Speed == 0)
+			// Friction slowdown if the target is lost or completely paralyzed (Speed == 0 or Active Stun Timer is running)
 			velocity.X = Mathf.MoveToward(Velocity.X, 0, Speed > 0 ? Speed : 10.0f);
 			velocity.Z = Mathf.MoveToward(Velocity.Z, 0, Speed > 0 ? Speed : 10.0f);
 		}
@@ -123,6 +127,7 @@ public partial class Enemy : CharacterBody3D
 		EnemyName = data.name;
 		Health = data.health;
 		Speed = data.speed;
+		_baseSpeed = data.speed; // Store the original unmutated speed baseline here
 		_maxHealth = data.health;
 		Health = _maxHealth;
 
@@ -253,8 +258,6 @@ public partial class Enemy : CharacterBody3D
 			float floatingHeightPadding = height + 0.5f;
 			nameLabel.Position = new Vector3(0, floatingHeightPadding, 0);
 		}
-		
-		
 	}
 
 	private void OnDamageAreaBodyEntered(Node body)
@@ -275,7 +278,10 @@ public partial class Enemy : CharacterBody3D
 		}
 	}
 
-	public void TakeDamage(float amount)
+	// OVERLOADED: Upgraded to check weapon element modifiers during project impact signals
+	public void TakeDamage(float amount) => TakeDamage(amount, SpearType.None);
+
+	public void TakeDamage(float amount, SpearType projectileType)
 	{
 		Health -= amount;
 		
@@ -284,7 +290,26 @@ public partial class Enemy : CharacterBody3D
 			_healthBar.Value = Mathf.Max(Health, 0.0f);
 		}
 		
-		GD.Print($"[{EnemyName}] took {amount} damage. Health remaining: {Health}/{_maxHealth}");
+		GD.Print($"[{EnemyName}] took {amount} damage from {projectileType}. Health remaining: {Health}/{_maxHealth}");
+
+		// --- LIGHTNING RE-STUN MULTI-PROJECTILE BUG FIX ENGINE ---
+		if (projectileType == SpearType.Lightning)
+		{
+			// Capture local references safely to prevent memory leak hooks
+			SceneTreeTimer capturedTimerInstance = GetTree().CreateTimer(3.0f);
+			_activeStunTimer = capturedTimerInstance;
+
+			capturedTimerInstance.Timeout += () =>
+			{
+				// If this specific instance has expired and hasn't been overwritten by a newer lightning strike, restore speed
+				if (GodotObject.IsInstanceValid(this) && _activeStunTimer == capturedTimerInstance)
+				{
+					_activeStunTimer = null; 
+					GD.Print($"🔓 STUN EXPELLED: {EnemyName} recovered from paralysis safely.");
+				}
+			};
+		}
+
 		if (Health <= 0) Die();
 	}
 

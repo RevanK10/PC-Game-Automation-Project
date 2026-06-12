@@ -29,7 +29,6 @@ public partial class SpearProjectile : RigidBody3D
 	public void SetSpecialGlow(bool active)
 	{
 		// 1. FIXED: If it's a standard spear, exit instantly!
-		// This leaves your imported .obj and 2 .png textures completely alone.
 		if (ProjectileType == SpearType.None)
 		{
 			return;
@@ -109,16 +108,18 @@ public partial class SpearProjectile : RigidBody3D
 			{
 				if (ProjectileType == SpearType.Lightning)
 				{
-					TriggerLightningStun(enemy);
+					// Clean handoff to the upgraded enemy damage loop (Deals lightning damage + triggers stun tracking)
+					enemy.TakeDamage(15.0f, ProjectileType);
 				}
 				else if (ProjectileType == SpearType.Gravity)
 				{
+					enemy.TakeDamage(25.0f, ProjectileType);
 					TriggerGravityVortex();
 				}
 				else
 				{
 					// Default normal spear damage
-					enemy.TakeDamage(25.0f);
+					enemy.TakeDamage(25.0f, ProjectileType);
 				}
 
 				CallDeferred(MethodName.StickToTarget, body);
@@ -157,29 +158,8 @@ public partial class SpearProjectile : RigidBody3D
 		GlobalPosition = currentGlobalPosition;
 		GlobalBasis = currentGlobalBasis;
 	}
-	
-	// ⚡ 1. LIGHTNING STUN MECHANIC
-	private void TriggerLightningStun(Enemy enemy)
-	{
-		enemy.TakeDamage(15.0f); // Light impact damage
-		
-		// Temporal speed freeze override
-		float originalSpeed = enemy.Speed;
-		enemy.Speed = 0.0f; 
-		GD.Print($"⚡ {enemy.EnemyName} is electrocuted and paralyzed!");
 
-		// Release from stun after 3 full seconds
-		GetTree().CreateTimer(3.0f).Timeout += () =>
-		{
-			if (IsInstanceValid(enemy))
-			{
-				enemy.Speed = originalSpeed;
-				GD.Print($"⚡ {enemy.EnemyName} recovered from electrocution.");
-			}
-		};
-	}
-
-	// 🌌 2. GRAVITY VORTEX PULL MECHANIC
+	// 🌌 1. GRAVITY VORTEX PULL MECHANIC
 	private void TriggerGravityVortex()
 	{
 		float pullRadius = 12.0f;
@@ -208,7 +188,7 @@ public partial class SpearProjectile : RigidBody3D
 		}
 	}
 
-	// 💥 3. HIGH EXPLOSIVE AOE MECHANIC
+	// 💥 2. HIGH EXPLOSIVE AOE MECHANIC
 	private void TriggerExplosionEffect()
 	{
 		float blastRadius = 8.0f;
@@ -227,7 +207,8 @@ public partial class SpearProjectile : RigidBody3D
 					float falloffFactor = 1.0f - (distance / blastRadius);
 					float finalCalculatedDamage = maxBlastDamage * falloffFactor;
 
-					enemy.TakeDamage(Mathf.Max(finalCalculatedDamage, 15.0f));
+					// Pass the weapon type flag to the enemy's damage processor
+					enemy.TakeDamage(Mathf.Max(finalCalculatedDamage, 15.0f), ProjectileType);
 
 					Vector3 knockbackDir = (enemy.GlobalPosition - GlobalPosition).Normalized();
 					knockbackDir.Y = 0.2f; 

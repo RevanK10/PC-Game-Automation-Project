@@ -97,7 +97,12 @@ public partial class Player : CharacterBody3D
 		UpdateHealthUI();
 		UpdateStaminaUI();
 		
-		// Initial sync check based on menu initialization state boundaries
+		if (ArcadeSaveSystem.MostRecentScore == 0)
+		{
+			ArcadeSaveSystem.ResetSpecialAmmo();
+		}
+		
+		ArcadeSaveSystem.SelectedSpear = SpearType.None;
 		ToggleHotbarVisibility(ArcadeSaveSystem.IsGamePlaying);
 	}
 	
@@ -300,6 +305,11 @@ public partial class Player : CharacterBody3D
 		
 		if (@event.IsActionPressed("primary_fire") && _canThrow && Input.MouseMode == Input.MouseModeEnum.Captured)
 		{
+			SpearType activeType = ArcadeSaveSystem.SelectedSpear;
+			if (activeType != SpearType.None && ArcadeSaveSystem.SpearAmmo[activeType] <= 0)
+			{
+				return;
+			}
 			if (SpearContainer != null)
 			{
 				_isDrawing = true;
@@ -351,12 +361,25 @@ public partial class Player : CharacterBody3D
 	private void ThrowSpear()
 	{
 		if (SpearProjectile == null) return;
+		
+		SpearType activeType = ArcadeSaveSystem.SelectedSpear;
+		if (activeType != SpearType.None)
+		{
+			if (ArcadeSaveSystem.SpearAmmo[activeType] > 0)
+			{
+				ArcadeSaveSystem.SpearAmmo[activeType]--;
+			}
+			else
+			{
+				activeType = SpearType.None;
+			}
+		}
 
 		_canThrow = false;
 		_cooldownTimer.Start();
 
 		var spear = SpearProjectile.Instantiate<SpearProjectile>();
-		SpearType activeType = ArcadeSaveSystem.SelectedSpear;
+		activeType = ArcadeSaveSystem.SelectedSpear;
 		spear.ProjectileType = activeType;
 
 		GetTree().Root.AddChild(spear);

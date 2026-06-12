@@ -112,11 +112,13 @@ public partial class ArcadeUi : CanvasLayer
 			ScoreDisplayLabel.Text = $"Most Recent Score: {ArcadeSaveSystem.MostRecentScore}\nHighest Score: {ArcadeSaveSystem.HighestScore}";
 		}
 	}
-
+	
+	
 	public void _on_restart_button_pressed()
 	{
 		ArcadeSaveSystem.IsGamePlaying = false;
 		ArcadeSaveSystem.IsGameOver = false;
+		ArcadeSaveSystem.ResetSpecialAmmo();
 		GetTree().ReloadCurrentScene();
 	}
 

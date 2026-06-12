@@ -14,11 +14,25 @@ public static class ArcadeSaveSystem
 {
 	private static int _highestScore = 0;
 	private const string SaveFilePath = "user://highscore.save";
+	
 
 	// Tracks which modification type was selected in the main menu
 	public static SpearType SelectedSpear { get; set; } = SpearType.None;
+	public static System.Collections.Generic.Dictionary<SpearType, int> SpearAmmo { get; set; } = 
+	 new System.Collections.Generic.Dictionary<SpearType, int>()
+	{
+		{ SpearType.Lightning, 5 },
+		{ SpearType.Gravity, 5 },
+		{ SpearType.Explosive, 5 }
+	};
+	
+	public static void ResetSpecialAmmo()
+	{
+		SpearAmmo[SpearType.Lightning] = 5;
+		SpearAmmo[SpearType.Gravity] = 5;
+		SpearAmmo[SpearType.Explosive] = 5;
+	}
 
-	// UPGRADED: HighestScore now automatically checks the local disk and auto-saves records
 	public static int HighestScore 
 	{ 
 		get
