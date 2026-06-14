@@ -42,9 +42,9 @@ public partial class GameDataManager : Node
 		// UPGRADED: No longer reads from system environment variables. 
 		// Now safely checks the user-pasted local text file built by the main menu.
 		string apiKey = "";
-		if (FileAccess.FileExists("user://api_key.txt"))
+		if (FileAccess.FileExists("user://gemini_api_key.txt"))
 		{
-			using var file = FileAccess.Open("user://api_key.txt", FileAccess.ModeFlags.Read);
+			using var file = FileAccess.Open("user://gemini_api_key.txt", FileAccess.ModeFlags.Read);
 			apiKey = file.GetAsText().Trim();
 		}
 
@@ -138,20 +138,23 @@ public partial class GameDataManager : Node
 			var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 			CurrentLevelData = JsonSerializer.Deserialize<LevelConfig>(innerJson, options);
 			
-			GD.Print($"🎉 Online AI Generation Success! Loaded Level: {CurrentLevelData.DifficultyName}");
+			GD.Print($"[GameDataManager] Online Success! Difficulty: {CurrentLevelData.DifficultyName}, Wave Count: {CurrentLevelData.Waves?.Count ?? 0}");
 			
-			GetTree().ChangeSceneToFile("res://main.tscn"); 
+			ArcadeSaveSystem.IsGamePlaying = true;
+			ArcadeSaveSystem.IsGameOver = false;
+			GD.Print("[GameDataManager] Transitioning to Main scene...");
+			GetTree().CallDeferred("change_scene_to_file", "res://Main.tscn"); 
 		}
 		catch (Exception e)
 		{
-			GD.PrintErr($"❌ Failed parsing online AI response data: {e.Message}");
+			GD.PrintErr($"[GameDataManager] Failed parsing online AI response: {e.Message}");
 			TriggerOfflineFallback();
 		}
 	}
 
-	// Helper cleanup function so code isn't duplicated across errors
 	private void TriggerOfflineFallback()
 	{
+		GD.Print("[GameDataManager] Triggering Offline Fallback.");
 		CurrentLevelData = new LevelConfig()
 		{
 			LevelId = "offline_fallback_safety",
@@ -159,11 +162,21 @@ public partial class GameDataManager : Node
 			IsBossLevel = false,
 			Waves = new List<EnemyData>()
 			{
-				new EnemyData() { name = "Small Brown Robber", health = 100f, speed = 8f, scene_path = "res://enemies/base_enemy.tscn" },
-				new EnemyData() { name = "Medium Silver Soldier", health = 180f, speed = 6.0f, scene_path = "res://enemies/base_enemy.tscn" },
-				new EnemyData() { name = "Big Red Demon", health = 250f, speed = 5.0f, scene_path = "res://enemies/base_enemy.tscn" }
+				new EnemyData() { name = "Robber", health = 100f, speed = 8f, scene_path = "res://enemies/base_enemy.tscn" },
+				new EnemyData() { name = "Soldier", health = 180f, speed = 6.0f, scene_path = "res://enemies/base_enemy.tscn" },
+				new EnemyData() { name = "Demon", health = 250f, speed = 5.0f, scene_path = "res://enemies/base_enemy.tscn" }
 			}
 		};
-		GetTree().ChangeSceneToFile("res://main.tscn");
+		ArcadeSaveSystem.IsGamePlaying = true;
+		ArcadeSaveSystem.IsGameOver = false;
+		GetTree().CallDeferred("change_scene_to_file", "res://Main.tscn");
+	}
+
+	/// <summary>
+	/// Clears cached level data, useful when returning to the main menu.
+	/// </summary>
+	public static void ResetCurrentLevelData()
+	{
+		CurrentLevelData = null;
 	}
 }

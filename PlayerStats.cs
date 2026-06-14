@@ -9,15 +9,28 @@ public partial class PlayerStats : Node
 
 	// Exported variables so you can link them directly in your Godot Editor
 	[Export] public Label LevelLabel;
-	[Export] public Label ExpLabel;
+	
+	[Export] public ProgressBar ExpBar;
 	[Export] public Label KillLabel;
 
 	public override void _Ready()
 	{
+		// Fallback: find nodes if not assigned in inspector
+		if (LevelLabel == null)
+		{
+			LevelLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/HUD/VBoxContainer/LevelText");
+		}
+		if (ExpBar == null)
+		{
+			ExpBar = GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/HUD/VBoxContainer/ExpBar");
+		}
+		if (KillLabel == null)
+		{
+			KillLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/HUD/VBoxContainer/KillText");
+		}
 		// Display the starting values on screen right away
 		UpdateTextUI();
 	}
-
 	public void RegisterKill(int expReward)
 	{
 		TotalKills++;
@@ -41,7 +54,12 @@ public partial class PlayerStats : Node
 	private void UpdateTextUI()
 	{
 		if (LevelLabel != null) LevelLabel.Text = $"Level: {CurrentLevel}";
-		if (ExpLabel != null) ExpLabel.Text = $"EXP: {CurrentExp} / {ExpNeeded}";
+		
+		if (ExpBar != null)
+		{
+			ExpBar.MaxValue = ExpNeeded;
+			ExpBar.Value = CurrentExp;
+		}
 		if (KillLabel != null) KillLabel.Text = $"Kills: {TotalKills}";
 	}
 }

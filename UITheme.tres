@@ -1,0 +1,68 @@
+[gd_resource type="Theme" format=3 uid="uid://b3uh1d4vpjsv3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7r855"]
+bg_color = Color(0.22, 0.53, 0.95, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_color = Color(1, 1, 1, 0.8)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cqvjm"]
+content_margin_left = 14.0
+content_margin_top = 8.0
+content_margin_right = 14.0
+content_margin_bottom = 8.0
+bg_color = Color(0.16, 0.44, 0.85, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.65)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q1iic"]
+bg_color = Color(0.08, 0.29, 0.66, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.65)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dr31y"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+bg_color = Color(0.08, 0.09, 0.16, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.45, 0.65, 0.85, 0.8)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[resource]
+Button/colors/font_color = Color(1, 1, 1, 1)
+Button/styles/stylebox_hover = SubResource("StyleBoxFlat_7r855")
+Button/styles/stylebox_normal = SubResource("StyleBoxFlat_cqvjm")
+Button/styles/stylebox_pressed = SubResource("StyleBoxFlat_q1iic")
+Label/colors/font_color = Color(0.96, 0.96, 0.96, 1)
+LineEdit/colors/font_color = Color(0.96, 0.96, 0.96, 1)
+Panel/styles/panel = SubResource("StyleBoxFlat_dr31y")
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_dr31y")
+PopupPanel/styles/panel = SubResource("StyleBoxFlat_dr31y")
+RichTextLabel/colors/font_color = Color(0.98, 0.98, 0.98, 1)

@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 GlobalGameState="*uid://dwu1rv35trxab"
 GameDataManager="*uid://dbyvmqc5rajag"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
 [dotnet]
 
@@ -26,7 +27,11 @@ project/assembly_name="Archery Game"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_super-wakatime/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/godot_super-wakatime/plugin.cfg")
+
+[gui]
+
+theme/custom="res://UITheme.tres"
 
 [input]
 

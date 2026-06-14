@@ -26,7 +26,7 @@ public partial class Player : CharacterBody3D
 	[Export] public Control DamageOverlayLayer;
 	[Export] public AudioStreamPlayer DamageAudioPlayer;
 	
-	[Export] public Label HealthLabel;
+	[Export] public ProgressBar HealthBar;
 	[Export] public ProgressBar StaminaBar;
 	[Export] public Label ActiveSpearLabel;
 	
@@ -81,15 +81,17 @@ public partial class Player : CharacterBody3D
 		_cooldownTimer.Timeout += () => _canThrow = true;
 		AddChild(_cooldownTimer);
 
-		if (HealthLabel == null)
+		if (HealthBar == null)
 		{
-			HealthLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/HealthLabel") ?? 
-						  GetNodeOrNull<Label>("../ArcadeUI/HealthLabel");
+			HealthBar = GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/HUD/VBoxContainer/StatsRow/HealthBar") ??
+				GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/ArcadeUI/HealthBar") ??
+				GetNodeOrNull<ProgressBar>("../ArcadeUI/HealthBar");
 		}
 
 		if (StaminaBar == null)
 		{
-			StaminaBar = GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/ArcadeUI/StaminaBar") ??
+			StaminaBar = GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/HUD/VBoxContainer/StatsRow/StaminaBar") ??
+							  GetTree().Root.GetNodeOrNull<ProgressBar>("/root/Main/ArcadeUI/StaminaBar") ??
 						 GetNodeOrNull<ProgressBar>("../ArcadeUI/StaminaBar");
 		}
 
@@ -131,11 +133,6 @@ public partial class Player : CharacterBody3D
 			DamageOverlayLayer = GetTree().Root.GetNodeOrNull<Control>("/root/Main/DamagerOverlayManager/DamageOverlay");
 		}
 
-		if (HealthLabel == null)
-		{
-			HealthLabel = GetTree().Root.GetNodeOrNull<Label>("/root/Main/ArcadeUI/HealthLabel") ?? 
-						  GetNodeOrNull<Label>("../ArcadeUI/HealthLabel");
-		}
 
 		CurrentHealth -= amount;
 		GD.Print($"[PLAYER HEALTH] Damaged by {amount:F1}. Status: {CurrentHealth:F1}/{MaxHealth}");
@@ -168,9 +165,11 @@ public partial class Player : CharacterBody3D
 
 	private void UpdateHealthUI()
 	{
-		if (HealthLabel != null)
+		if (HealthBar != null)
 		{
-			HealthLabel.Text = $"HP: {Mathf.Max(CurrentHealth, 0.0f):F0} / {MaxHealth:F0}";
+			HealthBar.MinValue = 0;
+			HealthBar.MaxValue = MaxHealth;
+			HealthBar.Value = Mathf.Max(CurrentHealth, 0.0f);
 		}
 	}
 
@@ -178,6 +177,8 @@ public partial class Player : CharacterBody3D
 	{
 		if (StaminaBar != null)
 		{
+			StaminaBar.MinValue = 0;
+			StaminaBar.MaxValue = MaxStamina;
 			StaminaBar.Value = _currentStamina;
 			StaminaBar.Modulate = _isFatigued ? new Color(1.0f, 0.35f, 0.35f) : new Color(1.0f, 1.0f, 1.0f);
 		}

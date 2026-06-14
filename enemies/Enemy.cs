@@ -147,7 +147,7 @@ public partial class Enemy : CharacterBody3D
 		float radius = 0.5f;
 		float height = 2.0f;
 
-		if (EnemyName == "Big Red Demon")
+		if (EnemyName == "Demon")
 		{
 			material.AlbedoColor = new Color(0.3f, 0.02f, 0.02f);
 			material.Roughness = 0.8f;
@@ -174,7 +174,7 @@ public partial class Enemy : CharacterBody3D
 			
 			_collisionShape.Shape = DemonShape;
 		}
-		else if (EnemyName == "Small Brown Robber")
+		else if (EnemyName == "Robber")
 		{
 			material.AlbedoColor = new Color(0.25f, 0.15f, 0.08f); 
 			material.Roughness = 0.95f; 
@@ -188,7 +188,7 @@ public partial class Enemy : CharacterBody3D
 			
 			_collisionShape.Shape = RobberShape;
 		}
-		else if (EnemyName == "Medium Silver Soldier")
+		else if (EnemyName == "Soldier")
 		{
 			var armorGradientTex = new GradientTexture2D { Fill = GradientTexture2D.FillEnum.Linear, Repeat = (GradientTexture2D.RepeatEnum)1 };
 			armorGradientTex.FillFrom = new Vector2(0f, 0f);
@@ -318,7 +318,7 @@ public partial class Enemy : CharacterBody3D
 		var playerStats = GetTree().Root.GetNodeOrNull<PlayerStats>("Main/PlayerStats");
 		if (playerStats != null)
 		{
-			int expReward = (Health > 250 || EnemyName.Contains("Demon")) ? 50 : 15;
+			int expReward = (Health > 250 || EnemyName == "Big Red Demon") ? 50 : 15;
 			playerStats.RegisterKill(expReward);
 		}
 		QueueFree(); 

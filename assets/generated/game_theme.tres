@@ -1,0 +1,8 @@
+[gd_resource type="Theme" format=3 uid="uid://game_theme_res"]
+
+[resource]
+default_font_size = 24
+Button/styles/hover = null
+Button/styles/normal = null
+Button/styles/pressed = null
+Panel/styles/panel = null

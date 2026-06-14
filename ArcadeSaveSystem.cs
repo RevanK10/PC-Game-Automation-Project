@@ -56,9 +56,20 @@ public static class ArcadeSaveSystem
 	}
 
 	public static int MostRecentScore { get; set; } = 0;
+	public static int CurrentScore { get; set; } = 0;
 	public static float DifficultyMultiplier { get; set; } = 1.0f;
 	public static bool IsGamePlaying { get; set; } = false;
 	public static bool IsGameOver { get; set; } = false; 
+	public static bool PlayerDied { get; set; } = false;
+
+	public static void ResetGame()
+	{
+		IsGamePlaying = false;
+		IsGameOver = false;
+		PlayerDied = false;
+		CurrentScore = 0;
+		ResetSpecialAmmo();
+	}
 
 	private static void SaveHighScoreToDisk()
 	{

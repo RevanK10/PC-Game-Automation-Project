@@ -15,9 +15,6 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_7dm0k"]
 
-[sub_resource type="LabelSettings" id="LabelSettings_20pc6"]
-font_size = 18
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_trn2v"]
 size = Vector3(500, 2, 500)
 
@@ -53,15 +50,12 @@ fog_density = 0.005
 [node name="Main" type="Node3D" unique_id=605687230]
 script = ExtResource("1_20pc6")
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer", "DamageOverlayLayer", "HealthLabel", "StaminaBar", "ActiveSpearLabel", "SelectorHighlight", "HotbarSlots")]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1332281416 node_paths=PackedStringArray("SpearContainer", "DamageOverlayLayer", "SelectorHighlight", "HotbarSlots")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("1_fos0i")
 SpearProjectile = ExtResource("2_lgr22")
 SpearContainer = NodePath("Head/SpearMarker")
 DamageOverlayLayer = NodePath("../DamagerOverlayManager/DamageOverlay")
-HealthLabel = NodePath("../HUD/VBoxContainer/Health Label")
-StaminaBar = NodePath("../HUD/VBoxContainer/StaminaBar")
-ActiveSpearLabel = NodePath("../HUD/VBoxContainer/ActiveSpearLabel")
 SelectorHighlight = NodePath("../ArcadeUI/HotbarPanel/SelectorHighlight")
 HotbarSlots = [NodePath("../ArcadeUI/HotbarPanel/HBoxContainer/Slot1"), NodePath("../ArcadeUI/HotbarPanel/HBoxContainer/Slot2"), NodePath("../ArcadeUI/HotbarPanel/HBoxContainer/Slot3"), NodePath("../ArcadeUI/HotbarPanel/HBoxContainer/Slot4")]
 
@@ -85,217 +79,378 @@ script = ExtResource("2_3dxm6")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 script = ExtResource("3_lgr22")
 
-[node name="PlayerStats" type="Node3D" parent="." unique_id=428135126 node_paths=PackedStringArray("LevelLabel", "ExpLabel", "KillLabel")]
+[node name="PlayerStats" type="Node3D" parent="." unique_id=428135126]
 script = ExtResource("4_trn2v")
-LevelLabel = NodePath("../HUD/VBoxContainer/LevelText")
-ExpLabel = NodePath("../HUD/VBoxContainer/ExpText")
-KillLabel = NodePath("../HUD/VBoxContainer/KillText")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=473801236]
 
-[node name="VBoxContainer(2)" type="VBoxContainer" parent="HUD" unique_id=2136956302]
-layout_direction = 2
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -172.0
-offset_bottom = 142.0
-grow_horizontal = 0
-
-[node name="Instructions" type="Label" parent="HUD/VBoxContainer(2)" unique_id=725387146]
-modulate = Color(0, 0, 0, 1)
-layout_mode = 2
-size_flags_horizontal = 4
-text = "Movement - WASD
-Shooting - Left Click
-Looking - Mouse
-Run - Shift + WASD
-"
-label_settings = SubResource("LabelSettings_20pc6")
-horizontal_alignment = 2
-
 [node name="VBoxContainer" type="VBoxContainer" parent="HUD" unique_id=1974603290]
-offset_right = 125.0
-offset_bottom = 135.0
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -220.0
+offset_right = 320.0
+offset_bottom = -140.0
+theme_override_constants/separation = 8
 
-[node name="Health Label" type="Label" parent="HUD/VBoxContainer" unique_id=633827655]
-modulate = Color(0, 0, 0, 1)
+[node name="ExpBar" type="ProgressBar" parent="HUD/VBoxContainer" unique_id=1036949874]
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="StaminaBar" type="ProgressBar" parent="HUD/VBoxContainer" unique_id=725316929]
+[node name="StatsRow" type="HBoxContainer" parent="HUD/VBoxContainer" unique_id=1963748182]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="HealthBar" type="ProgressBar" parent="HUD/VBoxContainer/StatsRow" unique_id=633827655]
+custom_minimum_size = Vector2(200, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+value = 100.0
+
+[node name="StaminaBar" type="ProgressBar" parent="HUD/VBoxContainer/StatsRow" unique_id=725316929]
 self_modulate = Color(0, 1, 0, 1)
+custom_minimum_size = Vector2(200, 24)
 layout_mode = 2
+size_flags_horizontal = 3
 value = 100.0
 
 [node name="KillText" type="Label" parent="HUD/VBoxContainer" unique_id=642241075]
-modulate = Color(0, 0, 0, 1)
 layout_mode = 2
+size_flags_horizontal = 3
+text = "Kills: 0"
+horizontal_alignment = 1
 
 [node name="LevelText" type="Label" parent="HUD/VBoxContainer" unique_id=1258159007]
-modulate = Color(0, 0, 0, 1)
 layout_mode = 2
-
-[node name="ExpText" type="Label" parent="HUD/VBoxContainer" unique_id=1036949874]
-modulate = Color(0, 0, 0, 1)
-layout_mode = 2
+size_flags_horizontal = 3
+text = "Level: 1"
+horizontal_alignment = 1
 
 [node name="ActiveSpearLabel" type="Label" parent="HUD/VBoxContainer" unique_id=1123665040]
 layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 1
 
-[node name="ArcadeUI" type="CanvasLayer" parent="." unique_id=912225237 node_paths=PackedStringArray("MainMenuPanel", "DifficultyMenuPanel", "GameOverPanel", "ScoreDisplayLabel")]
+[node name="ArcadeUI" type="CanvasLayer" parent="." unique_id=912225237 node_paths=PackedStringArray("MainMenuPanel", "DifficultyMenuPanel", "GameOverPanel", "InstructionsPanel", "OptionsPanel", "LoadingPanel")]
+layer = 100
 script = ExtResource("5_03owx")
 MainMenuPanel = NodePath("MainMenu")
 DifficultyMenuPanel = NodePath("DifficultyMenu")
-GameOverPanel = NodePath("GameOverScreen")
-ScoreDisplayLabel = NodePath("GameOverScreen/ScoreBoardLabel")
+GameOverPanel = NodePath("GameOver")
+InstructionsPanel = NodePath("Instructions")
+OptionsPanel = NodePath("Options")
+LoadingPanel = NodePath("LoadingPanel")
 
-[node name="MainMenu" type="Control" parent="ArcadeUI" unique_id=722928173]
-layout_mode = 3
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
+[node name="MainMenu" type="PanelContainer" parent="ArcadeUI" unique_id=371621469]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TitleLabel" type="Label" parent="ArcadeUI/MainMenu" unique_id=521062888]
-layout_mode = 0
-offset_left = -100.0
-offset_top = -200.0
-offset_right = 20.0
-offset_bottom = -177.0
-scale = Vector2(2, 2)
-text = "ARCADE ARENA"
+[node name="MarginContainer" type="MarginContainer" parent="ArcadeUI/MainMenu" unique_id=691918208]
+layout_mode = 2
+theme_override_constants/margin_left = 100
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 100
+theme_override_constants/margin_bottom = 100
 
-[node name="StartGameButton" type="Button" parent="ArcadeUI/MainMenu" unique_id=25447123]
-layout_mode = 0
-offset_left = -50.0
-offset_top = 250.0
-offset_right = 56.0
-offset_bottom = 281.0
+[node name="VBoxContainer" type="VBoxContainer" parent="ArcadeUI/MainMenu/MarginContainer" unique_id=473378649]
+layout_mode = 2
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="ArcadeUI/MainMenu/MarginContainer/VBoxContainer" unique_id=2136707603]
+layout_mode = 2
+theme_override_font_sizes/font_size = 72
+text = "ARCADE ARENA"
+horizontal_alignment = 1
+
+[node name="ApiKeyLabel" type="Label" parent="ArcadeUI/MainMenu/MarginContainer/VBoxContainer" unique_id=1848782954]
+layout_mode = 2
+text = "GEMINI API KEY (REQUIRED):"
+horizontal_alignment = 1
+
+[node name="GeminiApiKeyInput" type="LineEdit" parent="ArcadeUI/MainMenu/MarginContainer/VBoxContainer" unique_id=1532658290]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+placeholder_text = "Enter Gemini API Key here..."
+alignment = 1
+
+[node name="StatusLabel" type="Label" parent="ArcadeUI/MainMenu/MarginContainer/VBoxContainer" unique_id=1532658291]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.384314, 0.384314, 1)
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="ArcadeUI/MainMenu/MarginContainer/VBoxContainer" unique_id=1735611817]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="StartGameButton" type="Button" parent="ArcadeUI/MainMenu/MarginContainer/VBoxContainer" unique_id=1523312540]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
 text = "START GAME"
 
-[node name="LineEdit" type="LineEdit" parent="ArcadeUI/MainMenu" unique_id=1330782125]
-layout_mode = 0
-offset_left = -50.0
-offset_top = -108.0
-offset_right = 80.0
-offset_bottom = -73.0
-placeholder_text = "Enter API Key"
-backspace_deletes_composite_character_enabled = true
-secret = true
+[node name="InstructionsButton" type="Button" parent="ArcadeUI/MainMenu/MarginContainer/VBoxContainer" unique_id=1993630367]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "INSTRUCTIONS"
 
-[node name="DifficultyMenu" type="Control" parent="ArcadeUI" unique_id=72497077]
+[node name="OptionsButton" type="Button" parent="ArcadeUI/MainMenu/MarginContainer/VBoxContainer" unique_id=164985009]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "OPTIONS"
+
+[node name="DifficultyMenu" type="PanelContainer" parent="ArcadeUI" unique_id=269000921]
+unique_name_in_owner = true
 visible = false
-layout_mode = 3
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="EasyModeButton" type="Button" parent="ArcadeUI/DifficultyMenu" unique_id=249594438]
-layout_mode = 0
-offset_left = -50.0
-offset_right = -7.0
-offset_bottom = 31.0
-text = "Easy"
+[node name="MarginContainer" type="MarginContainer" parent="ArcadeUI/DifficultyMenu" unique_id=1962246302]
+layout_mode = 2
+theme_override_constants/margin_left = 100
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 100
+theme_override_constants/margin_bottom = 100
 
-[node name="MediumModeButton" type="Button" parent="ArcadeUI/DifficultyMenu" unique_id=904913475]
-layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
-text = "Medium"
+[node name="VBoxContainer" type="VBoxContainer" parent="ArcadeUI/DifficultyMenu/MarginContainer" unique_id=408036508]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
 
-[node name="HardModeButton" type="Button" parent="ArcadeUI/DifficultyMenu" unique_id=1452365906]
-layout_mode = 0
-offset_left = 80.0
-offset_right = 127.0
-offset_bottom = 31.0
-text = "Hard"
+[node name="Label" type="Label" parent="ArcadeUI/DifficultyMenu/MarginContainer/VBoxContainer" unique_id=1639217873]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "SELECT DIFFICULTY"
+horizontal_alignment = 1
 
-[node name="GameOverScreen" type="Control" parent="ArcadeUI" unique_id=328670586]
+[node name="EasyModeButton" type="Button" parent="ArcadeUI/DifficultyMenu/MarginContainer/VBoxContainer" unique_id=1021616280]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "EASY"
+
+[node name="MediumModeButton" type="Button" parent="ArcadeUI/DifficultyMenu/MarginContainer/VBoxContainer" unique_id=1648385319]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "MEDIUM"
+
+[node name="HardModeButton" type="Button" parent="ArcadeUI/DifficultyMenu/MarginContainer/VBoxContainer" unique_id=1732319615]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "HARD"
+
+[node name="BackFromDifficulty" type="Button" parent="ArcadeUI/DifficultyMenu/MarginContainer/VBoxContainer" unique_id=1732319616]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "BACK"
+
+[node name="GameOver" type="PanelContainer" parent="ArcadeUI" unique_id=1662830718]
+unique_name_in_owner = true
 visible = false
-layout_mode = 3
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="GameOverLabel" type="Label" parent="ArcadeUI/GameOverScreen" unique_id=1445085147]
-modulate = Color(0, 0, 0, 1)
-layout_mode = 0
-offset_top = -150.0
-offset_right = 92.0
-offset_bottom = -101.0
-text = "GAME OVER
-"
+[node name="MarginContainer" type="MarginContainer" parent="ArcadeUI/GameOver" unique_id=1654515130]
+layout_mode = 2
+theme_override_constants/margin_left = 100
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 100
+theme_override_constants/margin_bottom = 100
 
-[node name="RestartButton" type="Button" parent="ArcadeUI/GameOverScreen" unique_id=1241866128]
-layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
+[node name="VBoxContainer" type="VBoxContainer" parent="ArcadeUI/GameOver/MarginContainer" unique_id=792606983]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="GameOverLabel" type="Label" parent="ArcadeUI/GameOver/MarginContainer/VBoxContainer" unique_id=1247919474]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 72
+text = "GAME OVER"
+horizontal_alignment = 1
+
+[node name="ScoreLabel" type="Label" parent="ArcadeUI/GameOver/MarginContainer/VBoxContainer" unique_id=2048550024]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Recent: 0 | High: 0"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="ArcadeUI/GameOver/MarginContainer/VBoxContainer" unique_id=1481268093]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
 text = "RESTART"
 
-[node name="ScoreBoardLabel" type="Label" parent="ArcadeUI/GameOverScreen" unique_id=162748691]
-modulate = Color(0, 0, 0, 1)
-layout_mode = 0
-offset_top = -75.0
-offset_right = 142.0
-offset_bottom = -52.0
-text = "Recent: 0 | High: 0"
+[node name="Instructions" type="PanelContainer" parent="ArcadeUI" unique_id=1357741413]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="HotbarPanel" type="PanelContainer" parent="ArcadeUI" unique_id=466702916]
+[node name="MarginContainer" type="MarginContainer" parent="ArcadeUI/Instructions" unique_id=462123202]
+layout_mode = 2
+theme_override_constants/margin_left = 100
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 100
+theme_override_constants/margin_bottom = 100
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ArcadeUI/Instructions/MarginContainer" unique_id=1504098235]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Title" type="Label" parent="ArcadeUI/Instructions/MarginContainer/VBoxContainer" unique_id=1436831931]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "HOW TO PLAY"
+horizontal_alignment = 1
+
+[node name="InstructionsText" type="RichTextLabel" parent="ArcadeUI/Instructions/MarginContainer/VBoxContainer" unique_id=113559259]
+layout_mode = 2
+bbcode_enabled = true
+text = "[center][font_size=24]
+Movement - WASD
+Shooting - Left Click
+Looking - Mouse
+Run - Hold Shift
+Pause/Menu - Esc
+[/font_size][/center]"
+fit_content = true
+
+[node name="BackFromInstructions" type="Button" parent="ArcadeUI/Instructions/MarginContainer/VBoxContainer" unique_id=1483583043]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "BACK"
+
+[node name="Options" type="PanelContainer" parent="ArcadeUI" unique_id=1024850012]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="ArcadeUI/Options" unique_id=548047771]
+layout_mode = 2
+theme_override_constants/margin_left = 100
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 100
+theme_override_constants/margin_bottom = 100
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ArcadeUI/Options/MarginContainer" unique_id=533377814]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Title" type="Label" parent="ArcadeUI/Options/MarginContainer/VBoxContainer" unique_id=577295419]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "OPTIONS"
+horizontal_alignment = 1
+
+[node name="VolumeLabel" type="Label" parent="ArcadeUI/Options/MarginContainer/VBoxContainer" unique_id=2071414587]
+layout_mode = 2
+text = "Master Volume"
+horizontal_alignment = 1
+
+[node name="VolumeSlider" type="HSlider" parent="ArcadeUI/Options/MarginContainer/VBoxContainer" unique_id=1729100592]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="FullscreenCheck" type="CheckBox" parent="ArcadeUI/Options/MarginContainer/VBoxContainer" unique_id=1922540383]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "Fullscreen"
+
+[node name="BackFromOptions" type="Button" parent="ArcadeUI/Options/MarginContainer/VBoxContainer" unique_id=1175492301]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 32
+text = "BACK"
+
+[node name="HotbarPanel" type="PanelContainer" parent="ArcadeUI" unique_id=2131862339]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -206.0
-offset_top = -70.0
+offset_top = -100.0
 offset_right = 206.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="ArcadeUI/HotbarPanel" unique_id=439533385]
+[node name="HBoxContainer" type="HBoxContainer" parent="ArcadeUI/HotbarPanel" unique_id=452083607]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="Slot1" type="Panel" parent="ArcadeUI/HotbarPanel/HBoxContainer" unique_id=1122931643]
+[node name="Slot1" type="Panel" parent="ArcadeUI/HotbarPanel/HBoxContainer" unique_id=919272798]
 custom_minimum_size = Vector2(100, 70)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ArcadeUI/HotbarPanel/HBoxContainer/Slot1" unique_id=1286605565]
-custom_minimum_size = Vector2(80, 40)
+[node name="Label" type="Label" parent="ArcadeUI/HotbarPanel/HBoxContainer/Slot1" unique_id=295190515]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -40.0
-offset_top = -20.0
-offset_right = 40.0
-offset_bottom = 20.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 14
@@ -303,23 +458,17 @@ text = "(1)
 Wooden
 Spear"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="Slot2" type="Panel" parent="ArcadeUI/HotbarPanel/HBoxContainer" unique_id=375199146]
+[node name="Slot2" type="Panel" parent="ArcadeUI/HotbarPanel/HBoxContainer" unique_id=678401748]
 custom_minimum_size = Vector2(100, 70)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ArcadeUI/HotbarPanel/HBoxContainer/Slot2" unique_id=825906642]
-custom_minimum_size = Vector2(80, 40)
+[node name="Label" type="Label" parent="ArcadeUI/HotbarPanel/HBoxContainer/Slot2" unique_id=760125010]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -40.0
-offset_top = -20.0
-offset_right = 40.0
-offset_bottom = 20.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 14
@@ -327,23 +476,17 @@ text = "(2)
 Lightning
 Spear"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="Slot3" type="Panel" parent="ArcadeUI/HotbarPanel/HBoxContainer" unique_id=637573671]
+[node name="Slot3" type="Panel" parent="ArcadeUI/HotbarPanel/HBoxContainer" unique_id=1563089072]
 custom_minimum_size = Vector2(100, 70)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ArcadeUI/HotbarPanel/HBoxContainer/Slot3" unique_id=1394668159]
-custom_minimum_size = Vector2(80, 40)
+[node name="Label" type="Label" parent="ArcadeUI/HotbarPanel/HBoxContainer/Slot3" unique_id=1780560275]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -40.0
-offset_top = -20.0
-offset_right = 40.0
-offset_bottom = 20.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 14
@@ -351,23 +494,17 @@ text = "(3)
 Gravity
 Spear"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="Slot4" type="Panel" parent="ArcadeUI/HotbarPanel/HBoxContainer" unique_id=2019364569]
+[node name="Slot4" type="Panel" parent="ArcadeUI/HotbarPanel/HBoxContainer" unique_id=485028840]
 custom_minimum_size = Vector2(100, 70)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ArcadeUI/HotbarPanel/HBoxContainer/Slot4" unique_id=570868034]
-custom_minimum_size = Vector2(80, 40)
+[node name="Label" type="Label" parent="ArcadeUI/HotbarPanel/HBoxContainer/Slot4" unique_id=1230032863]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -40.0
-offset_top = -20.0
-offset_right = 40.0
-offset_bottom = 20.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 14
@@ -375,12 +512,38 @@ text = "(4)
 Explosive
 Spear"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="SelectorHighlight" type="Panel" parent="ArcadeUI/HotbarPanel" unique_id=136531548]
-modulate = Color(1, 0, 0, 1)
-self_modulate = Color(0.91764706, 0, 0, 1)
-custom_minimum_size = Vector2(100, 50)
+[node name="SelectorHighlight" type="Panel" parent="ArcadeUI/HotbarPanel" unique_id=2046882267]
+modulate = Color(1, 1, 0, 0.3)
 layout_mode = 2
+
+[node name="LoadingPanel" type="PanelContainer" parent="ArcadeUI" unique_id=1740351288]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="ArcadeUI/LoadingPanel" unique_id=801870628]
+layout_mode = 2
+color = Color(0, 0, 0, 0.862745)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ArcadeUI/LoadingPanel" unique_id=356804038]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="ArcadeUI/LoadingPanel/VBoxContainer" unique_id=909110611]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "GENERATING ARENA..."
+horizontal_alignment = 1
+
+[node name="SubLabel" type="Label" parent="ArcadeUI/LoadingPanel/VBoxContainer" unique_id=1736124310]
+layout_mode = 2
+text = "Please wait while the environment is prepared"
+horizontal_alignment = 1
 
 [node name="KillZone" type="Area3D" parent="." unique_id=1266544008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5, 0)
@@ -553,8 +716,9 @@ color = Color(0.7181006, 1.4679879e-06, 6.738305e-07, 1)
 
 [node name="CrosshairUI" parent="CanvasLayer" unique_id=407272680 instance=ExtResource("12_5vvyt")]
 
-[connection signal="pressed" from="ArcadeUI/MainMenu/StartGameButton" to="ArcadeUI" method="_on_start_menu_button_pressed"]
-[connection signal="pressed" from="ArcadeUI/DifficultyMenu/EasyModeButton" to="ArcadeUI" method="_on_easy_mode_button_pressed"]
-[connection signal="pressed" from="ArcadeUI/DifficultyMenu/MediumModeButton" to="ArcadeUI" method="_on_medium_mode_button_pressed"]
-[connection signal="pressed" from="ArcadeUI/DifficultyMenu/HardModeButton" to="ArcadeUI" method="_on_hard_mode_button_pressed"]
-[connection signal="pressed" from="ArcadeUI/GameOverScreen/RestartButton" to="ArcadeUI" method="_on_restart_button_pressed"]
+[connection signal="pressed" from="ArcadeUI/MainMenu/MarginContainer/VBoxContainer/StartGameButton" to="ArcadeUI" method="OnStartGameButtonPressed"]
+[connection signal="pressed" from="ArcadeUI/MainMenu/MarginContainer/VBoxContainer/InstructionsButton" to="ArcadeUI" method="OnInstructionsButtonPressed"]
+[connection signal="pressed" from="ArcadeUI/MainMenu/MarginContainer/VBoxContainer/OptionsButton" to="ArcadeUI" method="OnOptionsButtonPressed"]
+[connection signal="pressed" from="ArcadeUI/GameOver/MarginContainer/VBoxContainer/RestartButton" to="ArcadeUI" method="OnRestartButtonPressed"]
+[connection signal="pressed" from="ArcadeUI/Instructions/MarginContainer/VBoxContainer/BackFromInstructions" to="ArcadeUI" method="OnBackButtonPressed"]
+[connection signal="pressed" from="ArcadeUI/Options/MarginContainer/VBoxContainer/BackFromOptions" to="ArcadeUI" method="OnBackButtonPressed"]
